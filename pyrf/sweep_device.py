@@ -50,8 +50,8 @@ class SweepDevice(object):
         self.data_bytes_processed = 0
         self.martian_bytes_discarded = 0
         self.past_end_bytes_discarded = 0
-        self.fft_calculation_seconds = 0.0
-        self.bin_collection_seconds = 0.0
+        self.fft_calculation_seconds = 1.0
+        self.bin_collection_seconds = 1.0
 
     connector = property(lambda self: self.real_device.connector)
 
@@ -77,7 +77,6 @@ class SweepDevice(object):
         self.real_device.abort()
         self.real_device.flush()
         self.real_device.request_read_perm()
-
         self.fstart, self.fstop, self.plan = plan_sweep(self.real_device,
             fstart, fstop, bins, min_points, max_points)
 

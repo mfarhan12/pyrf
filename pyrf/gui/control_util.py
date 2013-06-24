@@ -1,5 +1,6 @@
 from pyrf.config import TriggerSettings
 import util
+import time
 import pyqtgraph as pg
 import gui_config as gui_state
 import constants
@@ -165,14 +166,18 @@ def _enable_plot(layout):
     layout.plot_state.enable_plot = not(layout.plot_state.enable_plot)
     if not layout.plot_state.enable_plot:
         util.change_item_color(layout._pause,  constants.ORANGE, constants.WHITE)
+
     else:
+        
         util.change_item_color(layout._pause,  constants.NORMAL_COLOR, constants.BLACK)
         layout.sweep_dut.capture_power_spectrum(layout.plot_state.fstart, 
                                           layout.plot_state.fstop,
                                           layout.plot_state.bin_size,
                                           antenna = layout.plot_state.ant,
                                           rfgain = layout.plot_state.gain,
-                                          ifgain = layout.plot_state.if_gain)
+                                          ifgain = layout.plot_state.if_gain,
+                                          min_points = self.debug_mode.sweep_dev_min_points,
+                                          max_points = self.debug_mode.sweep_dev_max_points)
 
 def _trigger_control(layout):
     """

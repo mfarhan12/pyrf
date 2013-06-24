@@ -135,21 +135,26 @@ class MainPanel(QtGui.QWidget):
     def receive_vrt(self, fstart, fstop, pow_):
         if not self.plot_state.enable_plot:
             return
-        if self.debug_mode.enable:
-            self.debug_mode.cap_speed = (fstop - fstart) /  (time.clock() - self.debug_mode.cap_speed_timer)
-            self.debug_mode.cap_speed_timer = time.clock()
-            self.debug_mode.print_stats()
-        
         self.sweep_dut.capture_power_spectrum(self.plot_state.fstart, 
                                                   self.plot_state.fstop,
                                                   self.plot_state.bin_size,
                                                   antenna = self.plot_state.ant,
                                                   rfgain = self.plot_state.gain,
-                                                  ifgain = self.plot_state.if_gain)
-        
+                                                  ifgain = self.plot_state.if_gain,
+                                                  min_points = self.debug_mode.sweep_dev_min_points,
+                                                  max_points = self.debug_mode.sweep_dev_max_points)
         self.pow_data = pow_
-
         self.update_plot()
+        self.debug_mode.data_captured = float(self.sweep_dut.data_bytes_received - self.debug_mode.data_bytes)
+        self.debug_mode.data_bytes = self.sweep_dut.data_bytes_received
+        if self.debug_mode.enable:
+            self.debug_mode.print_stats()
+        
+        self.debug_mode.fft_time = float( self.sweep_dut.fft_calculation_seconds - self.debug_mode.fft_time_total)
+        self.debug_mode.fft_time_total = self.sweep_dut.fft_calculation_seconds
+        self.debug_mode.bin_calc_time = self.sweep_dut.bin_collection_seconds - self.debug_mode.bin_calc_total
+        self.debug_mode.bin_calc_total = self.sweep_dut.bin_collection_seconds
+            
 
         
     def keyPressEvent(self, event):
@@ -181,8 +186,7 @@ class MainPanel(QtGui.QWidget):
         grid.setSpacing(10)
         for x in range(8):
             grid.setColumnMinimumWidth(x, 300)
-        grid.setRowMinimumHeight(10, 800)
-
+        grid.setRowMinimumHeight(10,800)
         # add plot widget
         plot_width = 8
         grid.addWidget(self._plot.window,1,0,10,plot_width)
@@ -261,7 +265,41 @@ class MainPanel(QtGui.QWidget):
         rbw = self._rbw_controls()
         grid.addWidget(QtGui.QLabel('Resolution Bandwidth:'), y, x, 1, 1)
         grid.addWidget(rbw, y, x + 1, 1, 3)
-                    
+
+        x = 0
+        y = 11
+        self._fps = QtGui.QLabel('FPS:')
+        grid.addWidget(self._fps, y, x, 1, 1)
+        x += 1
+        self._total_data = QtGui.QLabel('Total Data Captured(MB):')
+        grid.addWidget(self._total_data, y, x, 1,2)
+        x += 2
+        self._data_speed = QtGui.QLabel('Speed (MB/Sec):')
+        grid.addWidget(self._data_speed, y, x, 1, 2)
+        
+        if self.debug_mode.enable:
+            y = 8
+            x = plot_width
+            min_points = self.min_points_controls()
+            grid.addWidget(QtGui.QLabel('Min Points:'), y, x, 1, 1)
+            grid.addWidget(min_points,y,x+1,1,1)
+            
+            y += 1
+            max_points = self.max_points_controls()
+            grid.addWidget(QtGui.QLabel('Max Points:'), y, x, 1, 1)
+            grid.addWidget(max_points,y,x+1,1,1)
+            
+            x = 5
+            y = 11
+            self._processed_data = QtGui.QLabel('Total Data Processed(MB):')
+            grid.addWidget(self._processed_data, y, x, 1,2)
+            
+            x += 2
+            self._discarded_data = QtGui.QLabel('Total Data Discarded(MB):')
+            grid.addWidget(self._discarded_data, y, x, 1,2)
+        
+
+        
         cu._select_fstart(self)
         self.update_freq()
         self.setLayout(grid)
@@ -451,7 +489,33 @@ class MainPanel(QtGui.QWidget):
         rbw.setCurrentIndex(0)
         rbw.currentIndexChanged.connect(new_rbw)
         return rbw
-
+        
+    def min_points_controls(self):
+        min_points = QtGui.QLineEdit(str(self.debug_mode.sweep_dev_min_points))
+        def new_min_point():
+            try:
+                min = float(min_points.text())
+            except ValueError:
+                min_points.setText(str(self.debug_mode.sweep_dev_min_points))
+                return
+            self.debug_mode.sweep_dev_min_points = min
+        min_points.returnPressed.connect(lambda: new_min_point())
+        self.min_points = min_points
+        return min_points
+        
+    def max_points_controls(self):
+        max_points = QtGui.QLineEdit(str(self.debug_mode.sweep_dev_max_points))
+        def new_max_point():
+            try:
+                max = float(max_points.text())
+            except ValueError:
+                max_points.setText(str(self.debug_mode.sweep_dev_max_points))
+                return
+            self.debug_mode.sweep_dev_max_points = max
+        max_points.returnPressed.connect(lambda: new_max_point())
+        self.max_points = max_points
+        return max_points
+        
     def update_freq(self, delta = None):
             
         if delta == None:
@@ -516,25 +580,23 @@ class MainPanel(QtGui.QWidget):
         return marker_label,delta_label, diff_label
         
     def update_plot(self):
-        if self.debug_mode.enable:
-            self.debug_mode.fps =  1/(time.clock() - self.debug_mode.fps_timer)
-            self.debug_mode.fps_timer = time.clock()
+
+        self.debug_mode.fps =  1/(time.clock() - self.debug_mode.fps_timer)
+        self.debug_mode.fps_timer = time.clock()
         
         self.plot_state.update_freq_range(self.plot_state.fstart,
                                               self.plot_state.fstop , 
                                               len(self.pow_data))
-
+        plot_start_time = time.time()
         self.update_fft()
         self.update_marker()
         self.update_delta()
         self.update_diff()
-        
+        self.update_stats()
+        self.debug_mode.plot_time = time.time() - plot_start_time
+        self.debug_mode.sweep_dev_acq_time = 1/(self.debug_mode.fps) - self.debug_mode.plot_time
     def update_fft(self):
-        # if len(self.pow_data) > 2000:
-            # self.pow_data = self.pow_data[:2000]
-            # self.plot_state.update_freq_range(self.plot_state.fstart,
-                                                  # self.plot_state.fstop , 
-                                                  # len(self.pow_data))
+
         if self.plot_state.mhold:
             if (self.plot_state.mhold_fft == None or len(self.plot_state.mhold_fft) != len(self.pow_data)):
                 self.plot_state.mhold_fft = self.pow_data
@@ -630,7 +692,15 @@ class MainPanel(QtGui.QWidget):
         else:
             self._diff_lab.setText('')
 
-    
+    def update_stats(self):
+        self._fps.setText('FPS: ' + str(self.debug_mode.fps))
+        if self.debug_mode.fft_time != 0:
+            dev_cap_time = self.debug_mode.sweep_dev_acq_time - (self.debug_mode.fft_time + self.debug_mode.bin_calc_time)
+            self._data_speed.setText('Device Speed(MB/Sec): %0.2f' % (self.debug_mode.data_captured/1e6 / dev_cap_time))
+            self._total_data.setText('Total Data Captured(MB): %0.2f' %(self.sweep_dut.data_bytes_received/1e6))
+            if self.debug_mode.enable:
+                self._processed_data.setText('Total Data Processed(MB): %0.2f' %(self.sweep_dut.data_bytes_processed/1e6))
+                self._discarded_data.setText('Total Data Discarded(MB): %0.2f' %((self.sweep_dut.martian_bytes_discarded + self.sweep_dut.past_end_bytes_discarded)/1e6))
     @contextmanager
     def paused_stream(self):
         yield self.dut

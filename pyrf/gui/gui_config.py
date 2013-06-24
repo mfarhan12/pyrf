@@ -184,15 +184,31 @@ class debug(object):
 
     def __init__(self,mode):
         self.enable = mode
-        self.fps = None
+        self.fps = 0
         self.fps_timer = 0
-        self.cap_speed = None
+        
+        self.data_bytes = 0
+        self.data_captured = 0
+        
+        self.sweep_dev_acq_time = 0
+        
+        self.plot_runtime = 0 
+        
+        self.fft_time = 0
+        self.fft_time_total = 0
+        
+        self.bin_calc_time = 0
+        self.bin_calc_total = 0
+        
+        self.sweep_dev_min_points = constants.SWEEP_DEV_MIN_POINTS
+        self.sweep_dev_max_points = constants.SWEEP_DEV_MAX_POINTS
+        self.cap_speed = 0
         self.cap_speed_timer = 0
         
     def print_stats(self):
-        
-        print 'fps: ', self.fps, 'speed: ', self.cap_speed/1e6
-    
+        x = 1
+        # print 'fps: ', self.fps, 'plot time: ', self.plot_time
+        # print 'fft time', self.fft_time, 'data acq  time', self.sweep_dev_acq_time
     
     
     
