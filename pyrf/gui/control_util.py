@@ -176,8 +176,8 @@ def _enable_plot(layout):
                                           antenna = layout.plot_state.ant,
                                           rfgain = layout.plot_state.gain,
                                           ifgain = layout.plot_state.if_gain,
-                                          min_points = self.debug_mode.sweep_dev_min_points,
-                                          max_points = self.debug_mode.sweep_dev_max_points)
+                                          min_points = layout.debug_mode.sweep_dev_min_points,
+                                          max_points = layou.debug_mode.sweep_dev_max_points)
 
 def _trigger_control(layout):
     """

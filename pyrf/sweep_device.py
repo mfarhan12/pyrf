@@ -114,7 +114,6 @@ class SweepDevice(object):
         result = None
         while result is None:
             result = self._vrt_receive(self.real_device.read())
-            print result
         return result
 
     def _start_sweep(self):
