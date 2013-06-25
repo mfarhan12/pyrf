@@ -114,7 +114,7 @@ class MainPanel(QtGui.QWidget):
         super(MainPanel, self).__init__()
         self.dut = dut
         self.sweep_dut = SweepDevice(self.dut, self.receive_vrt)
-        self.plot_state = gui_config.plot_state()
+        self.plot_state = gui_config.plot_state(self)
         self.debug_mode = gui_config.debug(debugMode)
         # plot window
         self._plot = plot(self)
@@ -135,14 +135,18 @@ class MainPanel(QtGui.QWidget):
     def receive_vrt(self, fstart, fstop, pow_):
         if not self.plot_state.enable_plot:
             return
-        self.sweep_dut.capture_power_spectrum(self.plot_state.fstart, 
-                                                  self.plot_state.fstop,
-                                                  self.plot_state.bin_size,
-                                                  antenna = self.plot_state.ant,
-                                                  rfgain = self.plot_state.gain,
-                                                  ifgain = self.plot_state.if_gain,
-                                                  min_points = self.debug_mode.sweep_dev_min_points,
-                                                  max_points = self.debug_mode.sweep_dev_max_points)
+        if self.plot_state.playback_enable:
+            self.plot_state.playback.read_data()
+        else:
+            self.sweep_dut.capture_power_spectrum(self.plot_state.fstart, 
+                                                      self.plot_state.fstop,
+                                                      self.plot_state.bin_size,
+                                                      antenna = self.plot_state.ant,
+                                                      rfgain = self.plot_state.gain,
+                                                      ifgain = self.plot_state.if_gain,
+                                                      min_points = self.debug_mode.sweep_dev_min_points,
+                                                      max_points = self.debug_mode.sweep_dev_max_points)
+
         self.pow_data = pow_
         self.update_plot()
         self.debug_mode.data_captured = float(self.sweep_dut.data_bytes_received - self.debug_mode.data_bytes)
@@ -265,7 +269,15 @@ class MainPanel(QtGui.QWidget):
         rbw = self._rbw_controls()
         grid.addWidget(QtGui.QLabel('Resolution Bandwidth:'), y, x, 1, 1)
         grid.addWidget(rbw, y, x + 1, 1, 3)
-
+        
+        x = plot_width
+        y += 1
+        load, play, playback_list = self._playback_controls()
+        grid.addWidget(load, y, x, 1, 1)
+        grid.addWidget(playback_list, y, x + 1, 3, 3)
+        
+        y+= 1
+        grid.addWidget(play, y, x, 1, 1)
         x = 0
         y = 11
         self._fps = QtGui.QLabel('FPS:')
@@ -489,6 +501,19 @@ class MainPanel(QtGui.QWidget):
         rbw.setCurrentIndex(0)
         rbw.currentIndexChanged.connect(new_rbw)
         return rbw
+        
+    def _playback_controls(self):
+        load = QtGui.QPushButton('Load Folder')
+        load.clicked.connect(lambda: cu._load_folder(self))
+        self._load = load
+        
+        play = QtGui.QPushButton('Play File')
+        play.clicked.connect(lambda: cu._play_file(self))
+        self._play = play
+        
+        playback_list = QtGui.QListWidget()
+        self._playback_list = playback_list
+        return load, play, playback_list
         
     def min_points_controls(self):
         min_points = QtGui.QLineEdit(str(self.debug_mode.sweep_dev_min_points))

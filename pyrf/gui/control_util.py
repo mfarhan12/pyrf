@@ -1,10 +1,11 @@
 from pyrf.config import TriggerSettings
 import util
 import time
+import os
 import pyqtgraph as pg
 import gui_config as gui_state
 import constants
-
+from PySide import QtGui
 def _center_plot_view(layout):
     """
     move the view to the center of the current FFT displayed
@@ -81,6 +82,8 @@ def _left_arrow_key(layout):
     if layout.plot_state.enable_plot:
         layout._freq_minus.click()
         layout.plot_state.mhold_fft = None
+        
+        
 
 def _grid_control(layout):
     """
@@ -93,6 +96,28 @@ def _grid_control(layout):
     else:
         util.change_item_color(layout._grid,  constants.NORMAL_COLOR, constants.BLACK)
 
+def _load_folder(layout):
+        layout.plot_state.playback_dir = str(QtGui.QFileDialog.getExistingDirectory(layout, "Select Directory"))
+        util.update_playback_list(layout)
+
+def _play_file(layout):
+
+    layout.plot_state.playback_enable = not layout.plot_state.playback_enable
+    if layout.plot_state.playback_enable:
+        if layout._playback_list.count() != 0: 
+            util.change_item_color(layout._play,  constants.ORANGE, constants.WHITE)
+            layout._play.setText('Stop Playing')
+            layout.plot_state.selected_playback = layout._playback_list.currentItem()
+            file_name = layout.plot_state.playback_dir + '\\' + layout.plot_state.selected_playback.text()
+            layout.plot_state.playback.open_file(file_name)
+        else:
+            layout.plot_state.playback_enable = False
+    else:
+        util.change_item_color(layout._play,  constants.NORMAL_COLOR, constants.BLACK)
+        layout._play.setText('Play File')
+        if layout.plot_state.playback.file_opened:
+            layout.plot_state.playback.file_opened = False
+            
 def _mhold_control(layout):
     """
     disable/enable max hold curve in the plot
@@ -201,6 +226,7 @@ hotkey_dict = {'1': _select_fstart,
                 'C': _center_plot_view,
                 'K': _delta_control,
                 'G': _grid_control,
+                'L': _load_folder,
                 'H': _mhold_control,
                 'M': _marker_control,
                 'P': _find_peak,

@@ -2,12 +2,13 @@ import constants
 import util
 import numpy as np
 from pyrf.config import TriggerSettings
+from playback_util import playBack
 class plot_state(object):
     """
     Class to hold all the GUI's plot states
     """
 
-    def __init__(self):
+    def __init__(self, layout):
         
         self.grid = False
         
@@ -37,9 +38,16 @@ class plot_state(object):
         self.fstop = self.center_freq + self.bandwidth / 2
         self.bin_size = constants.INIT_BIN_SIZE
         self.rbw = self.bandwidth / self.bin_size
+        
         self.enable_plot = True
         self.freq_sel = 'CENT'
-    
+        
+        self.playback = playBack(callback = layout.receive_vrt)
+        self.playback_enable = False
+        self.playback_file_list = None
+        self.playback_dir = None
+        self.selected_playback = None
+        
     def enable_marker(self, layout):
         self.marker = True
         self.marker_sel = True
