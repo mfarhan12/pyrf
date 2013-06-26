@@ -123,7 +123,7 @@ class MainPanel(QtGui.QWidget):
         self.initUI()
         self.update_freq()
         self.initDUT()
-       
+        self.i = 0
     def initDUT(self):
         self.sweep_dut.capture_power_spectrum(self.plot_state.fstart, 
                                                   self.plot_state.fstop,
@@ -133,20 +133,9 @@ class MainPanel(QtGui.QWidget):
                                                   ifgain = self.plot_state.if_gain)
 
     def receive_vrt(self, fstart, fstop, pow_):
+        print fstart
         if not self.plot_state.enable_plot:
             return
-        if self.plot_state.playback_enable:
-            self.plot_state.playback.read_data()
-        else:
-            self.sweep_dut.capture_power_spectrum(self.plot_state.fstart, 
-                                                      self.plot_state.fstop,
-                                                      self.plot_state.bin_size,
-                                                      antenna = self.plot_state.ant,
-                                                      rfgain = self.plot_state.gain,
-                                                      ifgain = self.plot_state.if_gain,
-                                                      min_points = self.debug_mode.sweep_dev_min_points,
-                                                      max_points = self.debug_mode.sweep_dev_max_points)
-
         self.pow_data = pow_
         self.update_plot()
         self.debug_mode.data_captured = float(self.sweep_dut.data_bytes_received - self.debug_mode.data_bytes)
@@ -158,9 +147,21 @@ class MainPanel(QtGui.QWidget):
         self.debug_mode.fft_time_total = self.sweep_dut.fft_calculation_seconds
         self.debug_mode.bin_calc_time = self.sweep_dut.bin_collection_seconds - self.debug_mode.bin_calc_total
         self.debug_mode.bin_calc_total = self.sweep_dut.bin_collection_seconds
-            
-
         
+        if self.plot_state.playback_enable:
+            return
+            self.plot_state.playback.read_data()
+            return
+        else:
+            self.sweep_dut.capture_power_spectrum(self.plot_state.fstart, 
+                                                  self.plot_state.fstop,
+                                                      self.plot_state.bin_size,
+                                                      antenna = self.plot_state.ant,
+                                                      rfgain = self.plot_state.gain,
+                                                      ifgain = self.plot_state.if_gain,
+                                                      min_points = self.debug_mode.sweep_dev_min_points,
+                                                      max_points = self.debug_mode.sweep_dev_max_points)
+
     def keyPressEvent(self, event):
         hotkey_util(self, event)
            
@@ -605,7 +606,7 @@ class MainPanel(QtGui.QWidget):
         return marker_label,delta_label, diff_label
         
     def update_plot(self):
-
+        print 'got to update'
         self.debug_mode.fps =  1/(time.clock() - self.debug_mode.fps_timer)
         self.debug_mode.fps_timer = time.clock()
         

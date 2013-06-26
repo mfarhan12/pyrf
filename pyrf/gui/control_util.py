@@ -202,7 +202,7 @@ def _enable_plot(layout):
                                           rfgain = layout.plot_state.gain,
                                           ifgain = layout.plot_state.if_gain,
                                           min_points = layout.debug_mode.sweep_dev_min_points,
-                                          max_points = layou.debug_mode.sweep_dev_max_points)
+                                          max_points = layout.debug_mode.sweep_dev_max_points)
 
 def _trigger_control(layout):
     """
