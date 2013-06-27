@@ -26,6 +26,10 @@ from pyrf.sweep_device import SweepDevice
 from pyrf.connectors.twisted_async import TwistedConnector
 from pyrf.config import TriggerSettings
 
+def _get_reactor():
+    # late import because installReactor is being used
+    from twisted.internet import reactor
+    return reactor
 try:
     from twisted.internet.defer import inlineCallbacks
 except ImportError:
@@ -40,17 +44,12 @@ class MainWindow(QtGui.QMainWindow):
         super(MainWindow, self).__init__()
         self.initUI()
         self.dut = None
-        self._reactor = self._get_reactor()
+        self._reactor = _get_reactor()
         if len(sys.argv) > 1:
             self.open_device(sys.argv[1])
         else:
             self.open_device_dialog()
         self.show()
-
-    def _get_reactor(self):
-        # late import because installReactor is being used
-        from twisted.internet import reactor
-        return reactor
 
     def initUI(self):
         openAction = QtGui.QAction('&Open Device', self)
@@ -62,8 +61,6 @@ class MainWindow(QtGui.QMainWindow):
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(openAction)
         fileMenu.addAction(exitAction)
-
-
         self.setWindowTitle('PyRF')
 
     def open_device_dialog(self):
@@ -94,7 +91,7 @@ class MainWindow(QtGui.QMainWindow):
         else:
             debugMode = False
         self.dut = dut
-        self.setCentralWidget(MainPanel(dut,debugMode))
+        self.setCentralWidget(MainPanel(dut,debugMode,))
         self.setMinimumWidth(1360)
         self.setMinimumHeight(400)
         self.setWindowTitle('PyRF: %s' % name)
@@ -112,8 +109,10 @@ class MainPanel(QtGui.QWidget):
     """
     def __init__(self, dut,debugMode):
         super(MainPanel, self).__init__()
+        self._reactor = _get_reactor()
+        
         self.dut = dut
-        self.sweep_dut = SweepDevice(self.dut, self.receive_vrt)
+        self.sweep_dut = SweepDevice(self.dut, self.receive_power)
         self.plot_state = gui_config.plot_state(self)
         self.debug_mode = gui_config.debug(debugMode)
         # plot window
@@ -132,14 +131,30 @@ class MainPanel(QtGui.QWidget):
                                                   rfgain = self.plot_state.gain,
                                                   ifgain = self.plot_state.if_gain)
 
-    def receive_vrt(self, fstart, fstop, pow_):
-        print fstart
+    def receive_power(self, fstart = None, fstop = None, pow_ = None):
+        
+        if self.plot_state.playback_enable:
+            fstart, fstop, pow_ = self.plot_state.playback.read_data()
+            self._reactor.callLater(0, self.receive_power)
+            
+        else:
+            self.sweep_dut.capture_power_spectrum(self.plot_state.fstart, 
+                                                      self.plot_state.fstop,
+                                                      self.plot_state.bin_size,
+                                                      antenna = self.plot_state.ant,
+                                                      rfgain = self.plot_state.gain,
+                                                      ifgain = self.plot_state.if_gain,
+                                                      min_points = self.debug_mode.sweep_dev_min_points,
+                                                      max_points = self.debug_mode.sweep_dev_max_points)
         if not self.plot_state.enable_plot:
             return
+        if self.plot_state.playback_record:
+            self.plot_state.playback.save_data(fstart,fstop,pow_)
         self.pow_data = pow_
         self.update_plot()
         self.debug_mode.data_captured = float(self.sweep_dut.data_bytes_received - self.debug_mode.data_bytes)
         self.debug_mode.data_bytes = self.sweep_dut.data_bytes_received
+        
         if self.debug_mode.enable:
             self.debug_mode.print_stats()
         
@@ -147,20 +162,7 @@ class MainPanel(QtGui.QWidget):
         self.debug_mode.fft_time_total = self.sweep_dut.fft_calculation_seconds
         self.debug_mode.bin_calc_time = self.sweep_dut.bin_collection_seconds - self.debug_mode.bin_calc_total
         self.debug_mode.bin_calc_total = self.sweep_dut.bin_collection_seconds
-        
-        if self.plot_state.playback_enable:
-            return
-            self.plot_state.playback.read_data()
-            return
-        else:
-            self.sweep_dut.capture_power_spectrum(self.plot_state.fstart, 
-                                                  self.plot_state.fstop,
-                                                      self.plot_state.bin_size,
-                                                      antenna = self.plot_state.ant,
-                                                      rfgain = self.plot_state.gain,
-                                                      ifgain = self.plot_state.if_gain,
-                                                      min_points = self.debug_mode.sweep_dev_min_points,
-                                                      max_points = self.debug_mode.sweep_dev_max_points)
+       
 
     def keyPressEvent(self, event):
         hotkey_util(self, event)
@@ -186,6 +188,7 @@ class MainPanel(QtGui.QWidget):
                     self.plot_state.delta_ind = find_nearest_index(click_freq, self.plot_state.freq_range)
                     self.update_delta()
                 self.update_diff()
+                
     def initUI(self):
         grid = QtGui.QGridLayout()
         grid.setSpacing(10)
@@ -273,12 +276,15 @@ class MainPanel(QtGui.QWidget):
         
         x = plot_width
         y += 1
-        load, play, playback_list = self._playback_controls()
+        load, play, record, playback_list = self._playback_controls()
         grid.addWidget(load, y, x, 1, 1)
         grid.addWidget(playback_list, y, x + 1, 3, 3)
-        
-        y+= 1
+ 
+        y += 1
         grid.addWidget(play, y, x, 1, 1)
+        
+        y += 1
+        grid.addWidget(record, y, x, 1, 1)
         x = 0
         y = 11
         self._fps = QtGui.QLabel('FPS:')
@@ -310,9 +316,7 @@ class MainPanel(QtGui.QWidget):
             x += 2
             self._discarded_data = QtGui.QLabel('Total Data Discarded(MB):')
             grid.addWidget(self._discarded_data, y, x, 1,2)
-        
-
-        
+               
         cu._select_fstart(self)
         self.update_freq()
         self.setLayout(grid)
@@ -512,11 +516,16 @@ class MainPanel(QtGui.QWidget):
         play.clicked.connect(lambda: cu._play_file(self))
         self._play = play
         
+        record = QtGui.QPushButton('Record Data')
+        record.clicked.connect(lambda: cu._record_data(self))
+        self._record = record
+        
         playback_list = QtGui.QListWidget()
         self._playback_list = playback_list
-        return load, play, playback_list
+        return load, play, record, playback_list
         
     def min_points_controls(self):
+        
         min_points = QtGui.QLineEdit(str(self.debug_mode.sweep_dev_min_points))
         def new_min_point():
             try:
@@ -530,6 +539,7 @@ class MainPanel(QtGui.QWidget):
         return min_points
         
     def max_points_controls(self):
+        
         max_points = QtGui.QLineEdit(str(self.debug_mode.sweep_dev_max_points))
         def new_max_point():
             try:
@@ -606,10 +616,12 @@ class MainPanel(QtGui.QWidget):
         return marker_label,delta_label, diff_label
         
     def update_plot(self):
-        print 'got to update'
+       
         self.debug_mode.fps =  1/(time.clock() - self.debug_mode.fps_timer)
         self.debug_mode.fps_timer = time.clock()
         
+        if self.pow_data is None:
+            return
         self.plot_state.update_freq_range(self.plot_state.fstart,
                                               self.plot_state.fstop , 
                                               len(self.pow_data))

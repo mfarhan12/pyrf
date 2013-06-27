@@ -9,7 +9,7 @@ import datetime
 import math
 import numpy as np
 
-LINES_PER_PACKET = 3
+LINES_PER_PACKET = 2
 class playBack(object):
     """
    Class that is used to store FFT in a CSV file, or open an existing file with
@@ -24,14 +24,14 @@ class playBack(object):
         self.file = None
         self.csv_writer = None
         self.csv_reader = []
-        
-        
-    def make_header (self,start,stop,size):
-        return [['start_freq', 'stop_freq', 'size'], [str(start), str(stop), len(bins)]]
+        self.number_lines = 0
+        self.file_name = None
+    def make_header (self,start,stop):
+        return [[str(start), str(stop)]]
     
     def create_file(self, fileName = None):
         if fileName == None:
-            fileName = str(datetime.datetime.now()) + '.csv'
+            fileName = 'Playback Captures' + '//' + str(datetime.datetime.now()) + '.csv'
             fileName = fileName.replace(':', '-')
         self.file = open(fileName, 'wb')
         self.csv_writer = csv.writer(self.file)
@@ -40,7 +40,7 @@ class playBack(object):
     def save_data(self, start, stop, data):
         
         if self.file_opened:
-            header = self.make_header(start,stop,len(data))
+            header = self.make_header(start,stop)
             
             b64 = base64.b64encode(str(data))
 
@@ -55,26 +55,29 @@ class playBack(object):
         self.csv_reader = []
         self.curr_index = 0
         
+        
     def open_file(self, fileName):
-        self.file = open(fileName, 'rb')
-        reader = csv.reader(self.file)
-        for row in reader:
-            self.csv_reader.append(row)
-        # every packet has 3 lines (2 header, 1 for data)
-        self.num_packets = len(self.csv_reader) / LINES_PER_PACKET
+        self.file_name = fileName
         self.curr_index = 0
         
     def read_data(self):
+        file = open(self.file_name, 'rb')
+        num_lines = 0
         # print self.csv_reader
+        for i, line in enumerate(file):
+            # print i, self.curr_index
+            num_lines += 1
+            if i == self.curr_index:
+                start = line
+                stop = line
+            elif i == self.curr_index + 1:
+                raw_data = line
 
-        header = self.csv_reader[self.curr_index + 1] 
-        start = header[0]
-        stop = header[1]
-        data = []
-        raw_data = self.csv_reader[self.curr_index + 2] 
-
-        decoded_data = base64.b64decode(raw_data[0])
+        
+        decoded_data = base64.b64decode(raw_data)
+        
         split_data  = decoded_data.split(', ')
+        data = []
         for x in split_data:
             if "[" in x:
                 x = x.replace("[","")
@@ -82,15 +85,12 @@ class playBack(object):
                 x = x.replace("]","")
             data.append(float(x))
                 
-        self.curr_index += 3
-        if self.curr_index >= (self.num_packets * LINES_PER_PACKET):
+        self.curr_index += LINES_PER_PACKET
+        if self.curr_index >= num_lines:
             self.curr_index = 0
-        
+        file.close()
         if self.callback == None:
-            return start,stop,data
+            return start,stop, data
         else:
-            time.sleep(0.1)
             self.callback(start,stop,data)
             return
-
-

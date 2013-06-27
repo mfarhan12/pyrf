@@ -101,7 +101,6 @@ def _load_folder(layout):
         util.update_playback_list(layout)
 
 def _play_file(layout):
-
     layout.plot_state.playback_enable = not layout.plot_state.playback_enable
     if layout.plot_state.playback_enable:
         if layout._playback_list.count() != 0: 
@@ -118,6 +117,15 @@ def _play_file(layout):
         if layout.plot_state.playback.file_opened:
             layout.plot_state.playback.file_opened = False
             
+def _record_data(layout):
+    layout.plot_state.playback_record = not layout.plot_state.playback_record
+    if layout.plot_state.playback_record: 
+        util.change_item_color(layout._record,  constants.ORANGE, constants.WHITE)
+        layout.plot_state.playback.create_file()
+    else:
+        util.change_item_color(layout._record,  constants.NORMAL_COLOR, constants.BLACK)
+        layout.plot_state.playback.close_file()
+        util.update_playback_list(layout)
 def _mhold_control(layout):
     """
     disable/enable max hold curve in the plot
@@ -230,6 +238,7 @@ hotkey_dict = {'1': _select_fstart,
                 'H': _mhold_control,
                 'M': _marker_control,
                 'P': _find_peak,
+                'R': _record_file,
                 'SPACE': _enable_plot,
                 'T': _trigger_control
                 } 

@@ -42,11 +42,12 @@ class plot_state(object):
         self.enable_plot = True
         self.freq_sel = 'CENT'
         
-        self.playback = playBack(callback = layout.receive_vrt)
+        self.playback = playBack()
         self.playback_enable = False
         self.playback_file_list = None
-        self.playback_dir = None
+        self.playback_dir = '/Playback Capture'
         self.selected_playback = None
+        self.playback_record = False
         
     def enable_marker(self, layout):
         self.marker = True
