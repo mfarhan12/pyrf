@@ -96,9 +96,14 @@ def _grid_control(layout):
         util.change_item_color(layout._grid,  constants.NORMAL_COLOR, constants.BLACK)
 
 def _load_folder(layout):
-        layout.plot_state.playback_dir = str(QtGui.QFileDialog.getExistingDirectory(layout, "Select Directory"))
+    util.update_playback_list(layout)
+def _delete_file(layout):
+    if layout._playback_list.count() != 0:
+        print 'delete'
+        file_name =  'Playback Captures/' + layout._playback_list.currentItem().text()
+        os.remove(file_name)
         util.update_playback_list(layout)
-
+        
 def _play_file(layout):
     layout.plot_state.playback_enable = not layout.plot_state.playback_enable
     if layout.plot_state.playback_enable:

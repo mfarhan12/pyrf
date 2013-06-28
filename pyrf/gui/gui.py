@@ -120,9 +120,9 @@ class MainPanel(QtGui.QWidget):
         self.mhz_bottom, self.mhz_top = (f/10**6 for f in dut.SWEEP_FREQ_RANGE)
         self._vrt_context = {}
         self.initUI()
+        cu._load_folder(self)
         self.update_freq()
         self.initDUT()
-        self.i = 0
     def initDUT(self):
         self.sweep_dut.capture_power_spectrum(self.plot_state.fstart, 
                                                   self.plot_state.fstop,
@@ -199,12 +199,12 @@ class MainPanel(QtGui.QWidget):
         grid.setRowMinimumHeight(11,800)
         # add plot widget
         plot_width = 8
-        grid.addWidget(self._plot.window,1,0,11,plot_width)
+        grid.addWidget(self._plot.window, 1, 0, 11, plot_width)
 
         marker_label, delta_label, diff_label = self._marker_labels()
-        grid.addWidget(marker_label, 1, 1,1, 1)
-        grid.addWidget(delta_label, 1, 3,1, 1)
-        grid.addWidget(diff_label , 1, 5,1, 1)
+        grid.addWidget(marker_label, 1, 1, 1, 1)
+        grid.addWidget(delta_label, 1, 3, 1, 1)
+        grid.addWidget(diff_label , 1, 5, 1, 1)
         
         x = 0    
         y = 0
@@ -250,6 +250,7 @@ class MainPanel(QtGui.QWidget):
         grid.addWidget(cfreq, y, x, 1, 1)
         grid.addWidget(freq, y, x + 1, 1, 2)
         grid.addWidget(QtGui.QLabel('MHz'), y, x + 3, 1, 1)
+        
         x = plot_width
         y += 1
         bw_bt, bw_txt = self._bw_controls()
@@ -278,20 +279,21 @@ class MainPanel(QtGui.QWidget):
         
         x = plot_width
         y += 1
-        load, play, record, playback_list = self._playback_controls()
-        grid.addWidget(load, y, x, 1, 1)
-        grid.addWidget(play, y, x + 1, 1, 1)
-        grid.addWidget(record, y, x + 2, 1, 1)
-        y += 1
-        grid.addWidget(playback_list, y, x , 5, 4)
+        play, record, delete, playback_list = self._playback_controls()
+        grid.addWidget(play, y, x, 1, 1)
+        grid.addWidget(record, y, x + 1, 1, 1)
+        grid.addWidget(delete, y, x + 2, 1, 1)
+        grid.addWidget(playback_list, y + 1, x , 5, 4)
         
         x = 0
         y = 13
         self._fps = QtGui.QLabel('FPS:')
         grid.addWidget(self._fps, y, x, 1, 1)
+        
         x += 1
         self._total_data = QtGui.QLabel('Total Data Captured(MB):')
-        grid.addWidget(self._total_data, y, x, 1,2)
+        grid.addWidget(self._total_data, y, x, 1, 2)
+        
         x += 2
         self._data_speed = QtGui.QLabel('Speed (MB/Sec):')
         grid.addWidget(self._data_speed, y, x, 1, 2)
@@ -301,21 +303,21 @@ class MainPanel(QtGui.QWidget):
             x = plot_width
             min_points = self.min_points_controls()
             grid.addWidget(QtGui.QLabel('Min Points:'), y, x, 1, 1)
-            grid.addWidget(min_points,y,x+1,1,1)
+            grid.addWidget(min_points,y,x + 1, 1, 1)
             
             y += 1
             max_points = self.max_points_controls()
             grid.addWidget(QtGui.QLabel('Max Points:'), y, x, 1, 1)
-            grid.addWidget(max_points,y,x+1,1,1)
+            grid.addWidget(max_points,y,x + 1, 1, 1)
             
             x = 5
             y = 11
             self._processed_data = QtGui.QLabel('Total Data Processed(MB):')
-            grid.addWidget(self._processed_data, y, x, 1,2)
+            grid.addWidget(self._processed_data, y, x, 1, 2)
             
             x += 2
             self._discarded_data = QtGui.QLabel('Total Data Discarded(MB):')
-            grid.addWidget(self._discarded_data, y, x, 1,2)
+            grid.addWidget(self._discarded_data, y, x, 1, 2)
                
         cu._select_fstart(self)
         self.update_freq()
@@ -508,21 +510,22 @@ class MainPanel(QtGui.QWidget):
         return rbw
         
     def _playback_controls(self):
-        load = QtGui.QPushButton('Load Folder')
-        load.clicked.connect(lambda: cu._load_folder(self))
-        self._load = load
-        
+    
         play = QtGui.QPushButton('Play File')
         play.clicked.connect(lambda: cu._play_file(self))
         self._play = play
         
+        delete = QtGui.QPushButton('Delete File')
+        delete.clicked.connect(lambda: cu._delete_file(self))
+        self._delete = delete
+            
         record = QtGui.QPushButton('Record Data')
         record.clicked.connect(lambda: cu._record_data(self))
         self._record = record
         
         playback_list = QtGui.QListWidget()
         self._playback_list = playback_list
-        return load, play, record, playback_list
+        return play, record, delete, playback_list
         
     def min_points_controls(self):
         
