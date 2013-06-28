@@ -1,3 +1,4 @@
+import os
 import constants
 import util
 import numpy as np
@@ -45,7 +46,7 @@ class plot_state(object):
         self.playback = playBack()
         self.playback_enable = False
         self.playback_file_list = None
-        self.playback_dir = '/Playback Capture'
+        self.playback_dir = os.getcwd() + '\Playback Captures'
         self.selected_playback = None
         self.playback_record = False
         
@@ -128,7 +129,7 @@ class plot_state(object):
                           rbw = None, 
                           bw = None):
         
-        if fcenter != None:
+        if fcenter is not None:
             self.fstart = fcenter - (self.bandwidth / 2)
             if self.fstart < constants.MIN_FREQ:
                 self.fstart = constants.MIN_FREQ
@@ -141,7 +142,7 @@ class plot_state(object):
             if self.bin_size < 1:
                 self.bin_size = 1
         
-        elif fstart != None:
+        if fstart is not None:
             if fstart >= self.fstop:
                 fstart = self.fstop - constants.MIN_BW
             self.fstart = fstart
@@ -151,7 +152,7 @@ class plot_state(object):
             if self.bin_size < 1:
                 self.bin_size = 1
                 
-        elif fstop != None:
+        if fstop is not None:
             if fstop <= self.fstart:
                 fstop = self.fstart + constants.MIN_BW
             self.fstop = fstop
@@ -161,13 +162,13 @@ class plot_state(object):
             if self.bin_size < 1:
                 self.bin_size = 1
                 
-        elif rbw != None:
+        if rbw is not None:
             self.rbw = rbw * 1e3
             self.bin_size = int((self.bandwidth) / self.rbw)
             if self.bin_size < 1:
                 self.bin_size = 1
         
-        elif bw != None:
+        if bw is not None:
             if bw < constants.MIN_BW:
                 bw = constants.MIN_BW
             self.fstart = (self.center_freq - (bw / 2))

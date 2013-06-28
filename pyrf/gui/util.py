@@ -53,6 +53,7 @@ def find_nearest_index(value, array):
     return idx
 
 def update_playback_list(layout):
+
     data_files = [(x[0], x[2]) for x in os.walk(layout.plot_state.playback_dir)]
     layout.plot_state.playback_file_list = data_files[0][1]
     layout._playback_list.clear()

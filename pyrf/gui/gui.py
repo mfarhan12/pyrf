@@ -134,7 +134,9 @@ class MainPanel(QtGui.QWidget):
     def receive_power(self, fstart = None, fstop = None, pow_ = None):
         
         if self.plot_state.playback_enable:
-            fstart, fstop, pow_ = self.plot_state.playback.read_data()
+            start, stop, pow_ = self.plot_state.playback.read_data()
+            self.plot_state.update_freq_set(fstart = start, fstop = stop)
+            self.update_freq_edit()
             self._reactor.callLater(0, self.receive_power)
             
         else:
@@ -194,10 +196,10 @@ class MainPanel(QtGui.QWidget):
         grid.setSpacing(10)
         for x in range(8):
             grid.setColumnMinimumWidth(x, 300)
-        grid.setRowMinimumHeight(10,800)
+        grid.setRowMinimumHeight(11,800)
         # add plot widget
         plot_width = 8
-        grid.addWidget(self._plot.window,1,0,10,plot_width)
+        grid.addWidget(self._plot.window,1,0,11,plot_width)
 
         marker_label, delta_label, diff_label = self._marker_labels()
         grid.addWidget(marker_label, 1, 1,1, 1)
@@ -278,15 +280,13 @@ class MainPanel(QtGui.QWidget):
         y += 1
         load, play, record, playback_list = self._playback_controls()
         grid.addWidget(load, y, x, 1, 1)
-        grid.addWidget(playback_list, y, x + 1, 3, 3)
- 
+        grid.addWidget(play, y, x + 1, 1, 1)
+        grid.addWidget(record, y, x + 2, 1, 1)
         y += 1
-        grid.addWidget(play, y, x, 1, 1)
+        grid.addWidget(playback_list, y, x , 5, 4)
         
-        y += 1
-        grid.addWidget(record, y, x, 1, 1)
         x = 0
-        y = 11
+        y = 13
         self._fps = QtGui.QLabel('FPS:')
         grid.addWidget(self._fps, y, x, 1, 1)
         x += 1

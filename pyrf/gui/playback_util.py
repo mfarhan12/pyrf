@@ -68,8 +68,9 @@ class playBack(object):
             # print i, self.curr_index
             num_lines += 1
             if i == self.curr_index:
-                start = line
-                stop = line
+                freq_str = line.split(',')
+                start = float(freq_str[0])
+                stop = float(freq_str[1])
             elif i == self.curr_index + 1:
                 raw_data = line
 

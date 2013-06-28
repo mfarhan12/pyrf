@@ -237,7 +237,7 @@ hotkey_dict = {'1': _select_fstart,
                 'H': _mhold_control,
                 'M': _marker_control,
                 'P': _find_peak,
-                'R': _record_file,
+                'R': _record_data,
                 'SPACE': _enable_plot,
                 'T': _trigger_control
                 } 
