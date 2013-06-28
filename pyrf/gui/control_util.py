@@ -6,6 +6,7 @@ import pyqtgraph as pg
 import gui_config as gui_state
 import constants
 from PySide import QtGui
+
 def _center_plot_view(layout):
     """
     move the view to the center of the current FFT displayed
@@ -83,8 +84,6 @@ def _left_arrow_key(layout):
         layout._freq_minus.click()
         layout.plot_state.mhold_fft = None
         
-        
-
 def _grid_control(layout):
     """
     disable/enable plot grid in layout
