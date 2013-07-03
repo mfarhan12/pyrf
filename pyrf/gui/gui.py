@@ -282,7 +282,7 @@ class MainPanel(QtGui.QWidget):
         play, record, delete, playback_list = self._playback_controls()
         grid.addWidget(play, y, x, 1, 1)
         grid.addWidget(record, y, x + 1, 1, 1)
-        grid.addWidget(delete, y, x + 2, 1, 1)
+        grid.addWidget(delete, y, x + 1, 1, 1)
         grid.addWidget(playback_list, y + 1, x , 5, 4)
         
         x = 0
