@@ -132,7 +132,7 @@ class MainPanel(QtGui.QWidget):
                                                   ifgain = self.plot_state.if_gain)
 
     def receive_power(self, fstart = None, fstop = None, pow_ = None):
-        
+
         if self.plot_state.playback_enable:
             start, stop, pow_ = self.plot_state.playback.read_data()
             self.plot_state.update_freq_set(fstart = start, fstop = stop)

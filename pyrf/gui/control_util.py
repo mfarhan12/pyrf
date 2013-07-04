@@ -1,7 +1,6 @@
 from pyrf.config import TriggerSettings
 import util
 import time
-import os
 import pyqtgraph as pg
 import gui_config as gui_state
 import constants
@@ -99,17 +98,19 @@ def _load_folder(layout):
     util.update_playback_list(layout)
     
 def _remove_file(layout):
+
     if layout._playback_list.count() != 0:
-        print 'delete'
-        file_name =  'Playback Captures/' + layout._playback_list.currentItem().text()
-        util.update_playback_list(layout)
-        
+        list_item = layout._playback_list.currentItem()
+        layout.plot_state.playback_ignore_list. append(list_item.text())
+        layout._playback_list.takeItem(layout._playback_list.currentRow())
+        # util.update_playback_list(layout)
+
 def _play_file(layout):
     layout.plot_state.playback_enable = not layout.plot_state.playback_enable
     if layout.plot_state.playback_enable:
         if layout._playback_list.count() != 0: 
             util.change_item_color(layout._play,  constants.ORANGE, constants.WHITE)
-            layout._play.setText('Stop Playing')
+
             layout.plot_state.selected_playback = layout._playback_list.currentItem()
             file_name = layout.plot_state.playback_dir + '\\' + layout.plot_state.selected_playback.text()
             layout.plot_state.playback.open_file(file_name)
@@ -130,6 +131,7 @@ def _record_data(layout):
         util.change_item_color(layout._record,  constants.NORMAL_COLOR, constants.BLACK)
         layout.plot_state.playback.close_file()
         util.update_playback_list(layout)
+
 def _mhold_control(layout):
     """
     disable/enable max hold curve in the plot

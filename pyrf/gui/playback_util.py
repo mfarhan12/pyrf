@@ -6,7 +6,6 @@ import csv
 import sys
 import time
 import datetime
-import math
 import numpy as np
 
 LINES_PER_PACKET = 2
@@ -27,11 +26,11 @@ class playBack(object):
         self.number_lines = 0
         self.file_name = None
     def make_header (self,start,stop):
-        return [[str(start), str(stop)]]
+        return [[str(start), str(stop), 'Pyrf', sys.byteorder]]
     
     def create_file(self, fileName = None):
         if fileName == None:
-            fileName = 'Playback Captures' + '//' + str(datetime.datetime.now())
+            fileName = 'Playback Captures' + '//' + str(datetime.datetime.now()) 
             fileName = fileName.replace(':', '-')
             fileName = fileName.replace('.', '-')
             fileName = fileName + '.csv'
