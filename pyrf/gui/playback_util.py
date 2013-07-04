@@ -34,7 +34,7 @@ class playBack(object):
             fileName = 'Playback Captures' + '//' + str(datetime.datetime.now())
             fileName = fileName.replace(':', '-')
             fileName = fileName.replace('.', '-')
-            fileName = fileName + 'csv'
+            fileName = fileName + '.csv'
         self.file = open(fileName, 'wb')
         self.csv_writer = csv.writer(self.file)
         self.file_opened = True

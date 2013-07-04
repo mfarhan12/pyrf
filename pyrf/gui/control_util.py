@@ -97,11 +97,11 @@ def _grid_control(layout):
 
 def _load_folder(layout):
     util.update_playback_list(layout)
-def _delete_file(layout):
+    
+def _remove_file(layout):
     if layout._playback_list.count() != 0:
         print 'delete'
         file_name =  'Playback Captures/' + layout._playback_list.currentItem().text()
-        os.remove(file_name)
         util.update_playback_list(layout)
         
 def _play_file(layout):

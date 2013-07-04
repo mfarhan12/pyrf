@@ -279,10 +279,10 @@ class MainPanel(QtGui.QWidget):
         
         x = plot_width
         y += 1
-        play, record, delete, playback_list = self._playback_controls()
+        play, record, remove, playback_list = self._playback_controls()
         grid.addWidget(play, y, x, 1, 1)
         grid.addWidget(record, y, x + 1, 1, 1)
-        grid.addWidget(delete, y, x + 1, 1, 1)
+        grid.addWidget(remove, y, x + 2, 1, 1)
         grid.addWidget(playback_list, y + 1, x , 5, 4)
         
         x = 0
@@ -515,9 +515,9 @@ class MainPanel(QtGui.QWidget):
         play.clicked.connect(lambda: cu._play_file(self))
         self._play = play
         
-        delete = QtGui.QPushButton('Delete File')
-        delete.clicked.connect(lambda: cu._delete_file(self))
-        self._delete = delete
+        remove = QtGui.QPushButton('Remove File')
+        remove.clicked.connect(lambda: cu._remove_file(self))
+        self._remove = remove
             
         record = QtGui.QPushButton('Record Data')
         record.clicked.connect(lambda: cu._record_data(self))
@@ -525,7 +525,7 @@ class MainPanel(QtGui.QWidget):
         
         playback_list = QtGui.QListWidget()
         self._playback_list = playback_list
-        return play, record, delete, playback_list
+        return play, record, remove, playback_list
         
     def min_points_controls(self):
         
