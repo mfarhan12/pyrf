@@ -52,6 +52,7 @@ class MainWindow(QtGui.QMainWindow):
         self.show()
 
     def initUI(self):
+        self.setWindowIcon(QtGui.QIcon('thinkrf_icon.ico'))
         openAction = QtGui.QAction('&Open Device', self)
         openAction.triggered.connect(self.open_device_dialog)
         exitAction = QtGui.QAction('&Exit', self)
@@ -325,8 +326,8 @@ class MainPanel(QtGui.QWidget):
         self.show()
     
     def _trigger_control(self):
-        trigger = QtGui.QPushButton('Trigger', self)
- 
+        
+        trigger = QtGui.QPushButton('Trigger', self)       
         trigger.setToolTip("[T]\nTurn the Triggers on/off") 
         trigger.clicked.connect(lambda: cu._trigger_control(self))
         self._trigger = trigger

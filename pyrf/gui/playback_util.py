@@ -1,18 +1,15 @@
-
 from pyrf.devices.thinkrf import WSA4000
 from pyrf.sweep_device import SweepDevice
 import base64
 import csv
 import sys
-import time
 import datetime
-import numpy as np
 
 LINES_PER_PACKET = 2
 class playBack(object):
     """
-   Class that is used to store FFT in a CSV file, or open an existing file with
-   IQ/FFT data.
+   Class that is used to store FFT data in a CSV file, or open an existing file with
+   FFT data.
 
     :param filename: name of file to open/create 
     """
@@ -25,6 +22,7 @@ class playBack(object):
         self.csv_reader = []
         self.number_lines = 0
         self.file_name = None
+    
     def make_header (self,start,stop):
         return [[str(start), str(stop), 'Pyrf', sys.byteorder]]
     
@@ -55,8 +53,7 @@ class playBack(object):
         self.csv_writer = None
         self.csv_reader = []
         self.curr_index = 0
-        
-        
+
     def open_file(self, fileName):
         self.file_name = fileName
         self.curr_index = 0
@@ -64,9 +61,8 @@ class playBack(object):
     def read_data(self):
         file = open(self.file_name, 'rb')
         num_lines = 0
-        # print self.csv_reader
         for i, line in enumerate(file):
-            # print i, self.curr_index
+
             num_lines += 1
             if i == self.curr_index:
                 freq_str = line.split(',')
@@ -75,9 +71,7 @@ class playBack(object):
             elif i == self.curr_index + 1:
                 raw_data = line
 
-        
         decoded_data = base64.b64decode(raw_data)
-        
         split_data  = decoded_data.split(', ')
         data = []
         for x in split_data:
