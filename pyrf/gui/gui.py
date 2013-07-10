@@ -326,6 +326,7 @@ class MainPanel(QtGui.QWidget):
     
     def _trigger_control(self):
         trigger = QtGui.QPushButton('Trigger', self)
+ 
         trigger.setToolTip("[T]\nTurn the Triggers on/off") 
         trigger.clicked.connect(lambda: cu._trigger_control(self))
         self._trigger = trigger
