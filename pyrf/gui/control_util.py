@@ -1,9 +1,11 @@
+from PySide import QtGui, QtCore
 from pyrf.config import TriggerSettings
 import util
 import pyqtgraph as pg
 import gui_config as gui_state
 import constants
 from pyrf.util import read_data_and_context
+constants.ICON_SIZE = 20
 def _center_plot_view(layout):
     """
     move the view to the center of the current FFT displayed
@@ -147,6 +149,15 @@ def _find_peak(layout):
         layout.update_delta()
         layout.plot_state.delta_ind = peak
     layout.update_diff()
+
+def _atten_control(layout):
+    """
+    change the attenuation state
+    """
+    if layout._atten.checkState() == QtCore.Qt.CheckState.Unchecked:
+        layout.dut.scpiset(':INPUT:ATTENUATOR DISABLED')
+    else:
+        layout.dut.scpiset(':INPUT:ATTENUATOR ENABLED')
 def _enable_plot(layout):
     """
     pause/unpause the plot
@@ -157,7 +168,7 @@ def _enable_plot(layout):
         
     else:
         util.change_item_color(layout._pause,  constants.NORMAL_COLOR, constants.BLACK)
-        layout.read_sweep()
+        layout.read_trigg()
 
 def _trigger_control(layout):
     """
@@ -170,6 +181,78 @@ def _trigger_control(layout):
     else:
         layout.plot_state.enable_trig(layout)
         _select_center_freq(layout)
+
+def _load_playback_dir(layout):
+    util.update_playback_list(layout)
+
+def _change_playback_dir(layout):
+
+    layout.plot_state.playback_dir = QtGui.QFileDialog.getExistingDirectory()
+    util.update_playback_list(layout)
+    
+def _remove_file(layout):
+    if layout._playback_list.count() != 0:
+        list_item = layout._playback_list.currentItem()
+        layout.plot_state.playback_ignore_list.append(list_item.text())
+        layout._playback_list.takeItem(layout._playback_list.currentRow())
+
+def _play_file(layout):
+    layout.plot_state.playback_enable = not layout.plot_state.playback_enable
+    if layout.plot_state.playback_enable:
+        if layout._playback_list.count() != 0:
+            icon = QtGui.QIcon("Icons\Pause.png");
+            layout._play.setIcon(icon) 
+            layout._play.setIconSize(QtCore.QSize(constants.ICON_SIZE,constants.ICON_SIZE));          
+            layout.plot_state.selected_playback = layout._playback_list.currentItem()
+            file_name = layout.plot_state.playback_dir + '\\' + layout.plot_state.selected_playback.text()
+            layout.plot_state.playback.open_file(file_name)
+            if not layout.plot_state.enable_plot:
+                layout.plot_state.enable_plot = True
+                layout.receive_data()
+        else:
+            icon = QtGui.QIcon("Icons\Play.png");
+            layout._play.setIcon(icon) 
+            layout._play.setIconSize(QtCore.QSize(constants.ICON_SIZE,constants.ICON_SIZE));  
+            layout.plot_state.playback_enable = False
+    else:
+        icon = QtGui.QIcon("Icons\Play.png");
+        layout._play.setIcon(icon) 
+        layout._play.setIconSize(QtCore.QSize(constants.ICON_SIZE,constants.ICON_SIZE));  
+        layout.plot_state.enable_plot = False
+
+
+def _stop_file(layout):
+    layout.plot_state.playback_enable = False
+    if not layout.plot_state.enable_plot:
+                layout.plot_state.enable_plot = True
+    if layout.dut:
+        layout.read_sweep()
+    if layout.plot_state.playback.file_opened:
+        layout.plot_state.playback.file_opened = False
+        
+def _forward_file(layout):
+    if layout.plot_state.playback_enable:
+        layout.plot_state.enable_plot = True
+        layout.receive_data()
+        layout.plot_state.enable_plot = False
+    
+def _rewind_file(layout):
+    if layout.plot_state.playback_enable:
+        layout.plot_state.enable_plot = True
+        layout.plot_state.playback.curr_index -= 4
+        if layout.plot_state.playback.curr_index < 0:
+            layout.plot_state.playback.curr_index = 0
+        layout.receive_data()
+        layout.plot_state.enable_plot = False
+
+        
+def _record_data(layout):
+    layout.plot_state.playback_record = not layout.plot_state.playback_record
+    if layout.plot_state.playback_record: 
+        layout.plot_state.playback.create_file(layout.plot_state.playback_dir)
+    else:
+        layout.plot_state.playback.close_file()
+        util.update_playback_list(layout)
         
 hotkey_dict = {'1': _select_fstart,
                 '2': _select_center_freq,

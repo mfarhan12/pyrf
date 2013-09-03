@@ -15,8 +15,7 @@ from PySide import QtGui, QtCore
 import numpy as np
 import time
 from contextlib import contextmanager
-from util import find_max_index, find_nearest_index
-from util import hotkey_util
+from util import find_max_index, find_nearest_index,hotkey_util
 import constants
 import control_util as cu
 from plot_widget import plot
@@ -96,6 +95,7 @@ class MainPanel(QtGui.QWidget):
         self._vrt_context = {}
         self.initUI()
         self.disable_controls()
+
         self._reactor = self._get_reactor()
 
     def _get_reactor(self):
@@ -122,41 +122,30 @@ class MainPanel(QtGui.QWidget):
         dut = WSA4000(connector=TwistedConnector(self._reactor))
         yield dut.connect(name)
         self.dut = dut
+        self.dut.scpiset(':INPUT:ATTENUATOR ENABLED')
         self.sweep_dut = SweepDevice(dut, self.receive_data)
         self.cap_dut = CaptureDevice(dut, self.receive_data)
         self.enable_controls()
-        cu._select_fstart(self)
-        self.read_sweep()
+        yield self.dut.freq(self.plot_state.center_freq)
+        self.read_trigg()
 
-    def read_sweep(self):
-        #TODO: find cleaner way to do this
-        self.plot_state.dev_set.pop('freq', None)
-        self.plot_state.dev_set.pop('trigger', None)
-        self.sweep_dut.capture_power_spectrum(self.plot_state.fstart,
-                                              self.plot_state.fstop,
-                                              self.plot_state.bin_size,
-                                              self.plot_state.dev_set,
-                                              continuous = False)
 
     def read_trigg(self):
-        device_set = self.plot_state.dev_set
+
         #TODO: find cleaner way to do this
+        device_set = {}
         device_set['freq'] = self.plot_state.center_freq
-        device_set['trigger'] = self.plot_state.trig_set
-
         self.cap_dut.capture_power_spectrum(device_set,self.plot_state.bin_size)
-
-
-    def receive_data(self, fstart, fstop, pow_):
+            
+    def receive_data(self, fstart = None, fstop = None, pow_ = None):
+        self.plot_state.fstart = fstart
+        self.plot_state.fstop = fstop
         if not self.plot_state.enable_plot:
             return
-        if self.plot_state.trig_set:
-            self.read_trigg()
-        else:
-            self.read_sweep()
-        self.pow_data = pow_
-        self.update_plot()
 
+        self.read_trigg()
+        self.pow_data = pow_ - 50
+        self.update_plot()
 
     def keyPressEvent(self, event):
         if self.dut:
@@ -188,7 +177,7 @@ class MainPanel(QtGui.QWidget):
         grid = QtGui.QGridLayout()
         grid.setSpacing(10)
         for x in range(8):
-            grid.setColumnMinimumWidth(x, 300)
+            grid.setColumnMinimumWidth(x, 1000)
         grid.setRowMinimumHeight(14, 800)
 
         # add plot widget
@@ -202,17 +191,22 @@ class MainPanel(QtGui.QWidget):
  
         y = 0
         x = plot_width
-        grid.addWidget(self._device_controls(), y, x, 2, 5)
-        y += 2
-        grid.addWidget(self._freq_controls(), y, x, 4, 5)
-        y += 4
-        grid.addWidget(self._plot_controls(), y, x, 4, 5)
-
+        grid.addWidget(self._atten_controls(),y, x, 1, 1)
+        
+        y += 1
+        grid.addWidget(self._freq_controls(), y, x, 5, 4)
+        
+        y += 5
+        grid.addWidget(self._plot_controls(), y, x, 4, 4)
+                
         self.update_freq()
         self.setLayout(grid)
-
-        
-    
+    def _atten_controls(self):
+        atten = QtGui.QCheckBox('Attenuation')
+        atten.setChecked(True)
+        self._atten = atten
+        atten.clicked.connect(lambda: cu._atten_control(self))
+        return atten
     def _device_controls(self):
         dev_group = QtGui.QGroupBox("Device Control")
         self.dev_group = dev_group
@@ -284,13 +278,7 @@ class MainPanel(QtGui.QWidget):
         self._freq_group = freq_group
         
         freq_layout = QtGui.QVBoxLayout()
-        
-        fstart_hbox = QtGui.QHBoxLayout()
-        fstart_bt, fstart_txt = self._fstart_controls()
-        fstart_hbox.addWidget(fstart_bt)
-        fstart_hbox.addWidget(fstart_txt)
-        fstart_hbox.addWidget(QtGui.QLabel('MHz'))
-        
+                
         cfreq_hbox = QtGui.QHBoxLayout()
         cfreq_bt, cfreq_txt = self._center_freq()
         cfreq_hbox.addWidget(cfreq_bt)
@@ -303,14 +291,10 @@ class MainPanel(QtGui.QWidget):
         bw_hbox.addWidget(bw_txt)
         bw_hbox.addWidget(QtGui.QLabel('MHz'))
         
-        fstop_hbox = QtGui.QHBoxLayout()
-        fstop_bt, fstop_txt = self._fstop_controls()
-        fstop_hbox.addWidget(fstop_bt)
-        fstop_hbox.addWidget(fstop_txt)
-        fstop_hbox.addWidget(QtGui.QLabel('MHz'))
+
         
         freq_inc_hbox = QtGui.QHBoxLayout()
-        freq_inc_steps, freq_inc_minus, freq_inc_plus = self._freq_incr()
+        freq_inc_steps, freq_inc_plus,freq_inc_minus  = self._freq_incr()
         freq_inc_hbox.addWidget(freq_inc_minus)
         freq_inc_hbox.addWidget(freq_inc_steps)
         freq_inc_hbox.addWidget(freq_inc_plus)
@@ -320,10 +304,8 @@ class MainPanel(QtGui.QWidget):
         rbw_hbox.addWidget(QtGui.QLabel('Resolution Bandwidth:'))
         rbw_hbox.addWidget(rbw)
         
-        freq_layout.addLayout(fstart_hbox)
+
         freq_layout.addLayout(cfreq_hbox)
-        freq_layout.addLayout(bw_hbox)
-        freq_layout.addLayout(fstop_hbox)
         freq_layout.addLayout(freq_inc_hbox)
         freq_layout.addLayout(rbw_hbox)
         freq_group.setLayout(freq_layout)
@@ -373,8 +355,9 @@ class MainPanel(QtGui.QWidget):
         freq_plus = QtGui.QPushButton('+')
         freq_plus.clicked.connect(lambda: freq_step(1))
         self._freq_plus = freq_plus
-        self.control_widgets.append(self._freq_plus)
+
         self.control_widgets.append(self._freq_minus)
+        self.control_widgets.append(self._freq_plus)
         self.control_widgets.append(self._fstep_box)
         return  steps, freq_plus, freq_minus
     
@@ -453,39 +436,11 @@ class MainPanel(QtGui.QWidget):
             if f > constants.MAX_FREQ or f < constants.MIN_FREQ:
                 return
             self.plot_state.update_freq_set(fcenter = f)
-
-        elif self.plot_state.freq_sel == 'FSTART':
-            try:
-                f = (float(self._fstart_edit.text()) + delta) * constants.MHZ 
-            except ValueError:
-                return
-            if f > (constants.MAX_FREQ) or f < (constants.MIN_FREQ) or f > self.plot_state.fstop:
-                return
-            self.plot_state.update_freq_set(fstart = f)
-            
-        elif self.plot_state.freq_sel == 'FSTOP': 
-            try:
-                f = (float(self._fstop_edit.text()) + delta) * constants.MHZ 
-            except ValueError:
-                return
-            if f > constants.MAX_FREQ or f < constants.MIN_FREQ or f < self.plot_state.fstart:
-                return
-            self.plot_state.update_freq_set(fstop = f)
-        
-        elif self.plot_state.freq_sel == 'BW':
-            try:
-                f = (float(self._bw_edit.text()) + delta) * constants.MHZ
-            except ValueError:
-                return
-            if f < 0:
-                return
-            self.plot_state.update_freq_set(bw = f)
-    
+            self.update_freq_edit()
+            if self.dut:
+                self.dut.freq(self.plot_state.center_freq)
     def update_freq_edit(self):
-        self._fstop_edit.setText("%0.1f" % (self.plot_state.fstop/ 1e6))
-        self._fstart_edit.setText("%0.1f" % (self.plot_state.fstart/ 1e6))
         self._freq_edit.setText("%0.1f" % (self.plot_state.center_freq / 1e6))
-        self._bw_edit.setText("%0.1f" % (self.plot_state.bandwidth / 1e6))
     
     def _plot_controls(self):
 
@@ -518,7 +473,6 @@ class MainPanel(QtGui.QWidget):
         marker.setToolTip("[M]\nTurn Marker 1 on/off") 
         marker.clicked.connect(lambda: cu._marker_control(self))
         self._marker = marker
-        self.control_widgets.append(self._marker)
         return marker
         
     def _delta_control(self):
@@ -526,7 +480,6 @@ class MainPanel(QtGui.QWidget):
         delta.setToolTip("[K]\nTurn Marker 2 on/off") 
         delta.clicked.connect(lambda: cu._delta_control(self))
         self._delta = delta
-        self.control_widgets.append(self._delta)
         return delta
     
     def _peak_control(self):
@@ -534,7 +487,6 @@ class MainPanel(QtGui.QWidget):
         peak.setToolTip("[P]\nFind peak of the selected spectrum") 
         peak.clicked.connect(lambda: cu._find_peak(self))
         self._peak = peak
-        self.control_widgets.append(self._peak)
         return peak
         
     def _mhold_control(self):
@@ -542,7 +494,6 @@ class MainPanel(QtGui.QWidget):
         mhold.setToolTip("[H]\nTurn the Max Hold on/off") 
         mhold.clicked.connect(lambda: cu._mhold_control(self))
         self._mhold = mhold
-        self.control_widgets.append(self._mhold)
         return mhold
         
     def _center_control(self):
@@ -550,7 +501,6 @@ class MainPanel(QtGui.QWidget):
         center.setToolTip("[C]\nCenter the Plot View around the available spectrum") 
         center.clicked.connect(lambda: cu._center_plot_view(self))
         self._center_bt = center
-        self.control_widgets.append(self._center_bt)
         return center
         
     def _pause_control(self):
@@ -558,8 +508,100 @@ class MainPanel(QtGui.QWidget):
         pause.setToolTip("[Space Bar]\n pause the plot window") 
         pause.clicked.connect(lambda: cu._enable_plot(self))
         self._pause = pause
-        self.control_widgets.append(self._pause)
         return pause
+    
+    def _playback_control(self):
+        playback_group = QtGui.QGroupBox("Playback")
+        self._playback_group = playback_group
+        
+        playback_layout = QtGui.QVBoxLayout()
+        first_row = QtGui.QHBoxLayout()
+        first_row.addWidget(self._load_playback_dir())
+        first_row.addWidget(self._remove_playback_item())
+        
+        second_row = QtGui.QHBoxLayout()
+        second_row.addWidget(self._playback_play())
+        second_row.addWidget(self._playback_stop())
+        second_row.addWidget(self._playback_record())
+        second_row.addWidget(self._playback_rewind())
+        second_row.addWidget(self._playback_forward())
+
+
+        third_row = QtGui.QHBoxLayout()
+        third_row.addWidget(self._playback_list())
+        
+        playback_layout.addLayout(first_row)
+        playback_layout.addLayout(second_row)
+        playback_layout.addLayout(third_row)
+        playback_group.setLayout(playback_layout)
+        return playback_group
+        
+        
+    def _load_playback_dir(self):
+        load = QtGui.QPushButton('Load Directory')
+        load.setToolTip("Load Playback file directory") 
+        load.clicked.connect(lambda: cu._change_playback_dir(self))
+        self._load = load
+        return load
+        
+    def _remove_playback_item(self):
+        load = QtGui.QPushButton('Remove Playback File')
+        load.setToolTip("Remove a playback file from the list bellow (the file will not be deleted from the computer") 
+        load.clicked.connect(lambda: cu._remove_file(self))
+        self._load = load
+        return load
+    
+    def _playback_play(self):
+
+        play = QtGui.QPushButton()
+        icon = QtGui.QIcon("Icons\Play.png");
+        play.setIcon(icon) 
+        play.setIconSize(QtCore.QSize(constants.ICON_SIZE,constants.ICON_SIZE));        
+        play.clicked.connect(lambda: cu._play_file(self))
+        self._play = play
+        return play
+    
+    def _playback_record(self):
+        record = QtGui.QPushButton()
+        icon = QtGui.QIcon("Icons\Record.png");
+        record.setIcon(icon)
+        record.setIconSize(QtCore.QSize(constants.ICON_SIZE,constants.ICON_SIZE)); 
+        record.clicked.connect(lambda: cu._record_data(self))
+        self._record = record
+        return record
+        
+    def _playback_stop(self):
+        stop = QtGui.QPushButton()
+        icon = QtGui.QIcon("Icons\Stop.png");
+        stop.setIcon(icon)
+        stop.setIconSize(QtCore.QSize(constants.ICON_SIZE,constants.ICON_SIZE)); 
+        stop.clicked.connect(lambda: cu._stop_file(self))
+        self._stop = stop
+        return stop
+        
+    def _playback_forward(self):
+        forward = QtGui.QPushButton()
+        icon = QtGui.QIcon("Icons\Forward.png");
+        forward.setIcon(icon)
+        forward.setIconSize(QtCore.QSize(constants.ICON_SIZE,constants.ICON_SIZE)); 
+        forward.clicked.connect(lambda: cu._forward_file(self))
+        self.forward = forward
+        return forward
+        
+    def _playback_rewind(self):
+        rewind = QtGui.QPushButton()
+        icon = QtGui.QIcon("Icons\Rewind.png");
+        rewind.setIcon(icon)
+        rewind.setIconSize(QtCore.QSize(constants.ICON_SIZE,constants.ICON_SIZE)); 
+        rewind.clicked.connect(lambda: cu._rewind_file(self))
+        self._rewind = rewind
+        return rewind
+        
+    def _playback_list(self):
+        playback_list = QtGui.QListWidget()
+        self._playback_list = playback_list
+        return playback_list
+    
     def _marker_labels(self):
         marker_label = QtGui.QLabel('')
         marker_label.setStyleSheet('color: %s;' % constants.TEAL)
@@ -578,7 +620,9 @@ class MainPanel(QtGui.QWidget):
         return marker_label,delta_label, diff_label
         
     def update_plot(self):
-       
+        if self.pow_data is None:
+            return
+
         self.plot_state.update_freq_range(self.plot_state.fstart,
                                               self.plot_state.fstop , 
                                               len(self.pow_data))

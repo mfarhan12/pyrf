@@ -1,5 +1,5 @@
 import sys
-from PySide import QtGui
+from PySide import QtGui, QtCore
 from pyrf.gui.gui import MainWindow
 
 import qt4reactor

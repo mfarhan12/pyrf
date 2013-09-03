@@ -1,3 +1,4 @@
+import os
 import constants
 import util
 import numpy as np
@@ -14,8 +15,7 @@ class plot_state(object):
         self.mhold = False
         self.mhold_fft = None
         
-        
-        
+
         self.trig = False
         self.trig_set = None
         self.marker = False
@@ -36,7 +36,9 @@ class plot_state(object):
         self.rbw = self.bandwidth / self.bin_size
         self.enable_plot = True
         self.freq_sel = 'CENT'
-    
+        
+
+        
     def enable_marker(self, layout):
         self.marker = True
         self.marker_sel = True
@@ -121,17 +123,8 @@ class plot_state(object):
                           bw = None):
         
         if fcenter != None:
-            self.fstart = fcenter - (self.bandwidth / 2)
-            if self.fstart < constants.MIN_FREQ:
-                self.fstart = constants.MIN_FREQ
-            self.fstop = fcenter + (self.bandwidth / 2)
-            if self.fstop > constants.MAX_FREQ:    
-                self.fstop = constants.MAX_FREQ
-            self.bandwidth = self.fstop - self.fstart
-            self.center_freq = self.fstart + (self.bandwidth / 2)
-            self.bin_size = int((self.bandwidth) / self.rbw)
-            if self.bin_size < 1:
-                self.bin_size = 1
+            self.center_freq = fcenter 
+
         
         elif fstart != None:
             if fstart >= self.fstop:

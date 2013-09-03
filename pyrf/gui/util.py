@@ -1,4 +1,4 @@
-
+import os
 import  control_util 
 import numpy as np
 import constants
@@ -51,7 +51,22 @@ def find_nearest_index(value, array):
     """
     idx = (np.abs(array-value)).argmin()
     return idx
-    
+def update_playback_list(layout):
+
+    data_files = [(x[0], x[2]) for x in os.walk(layout.plot_state.playback_dir)]
+
+    if (data_files):
+        layout.plot_state.playback_file_list = data_files[0][1]
+
+        layout._playback_list.clear()
+        for name in layout.plot_state.playback_file_list:
+            if 'csv' in name and (name not in layout.plot_state.playback_ignore_list):
+                file = open(layout.plot_state.playback_dir + '\\' + name, 'r')
+                header = file.readline()
+                if 'Pyrf' in header: 
+                    layout._playback_list.addItem(name)
+            layout._playback_list.setCurrentRow(0)
+            
 def select_fstart(layout):
     layout._fstart.setStyleSheet('background-color: %s; color: white;' % constants.ORANGE)
     layout._cfreq.setStyleSheet("")
@@ -60,9 +75,7 @@ def select_fstart(layout):
     
 def select_center(layout):
     layout._cfreq.setStyleSheet('background-color: %s; color: white;' % constants.ORANGE)
-    layout._fstart.setStyleSheet("")
-    layout._fstop.setStyleSheet("")
-    layout._bw.setStyleSheet("")
+
     
 def select_bw(layout):
     layout._bw.setStyleSheet('background-color: %s; color: white;' % constants.ORANGE)
@@ -79,20 +92,7 @@ def select_fstop(layout):
 def change_item_color(item, textColor, backgroundColor):
     item.setStyleSheet("QPushButton{Background-color: %s; color: %s; } QToolButton{color: Black}" % (textColor, backgroundColor)) 
 
-def enable_freq_cont(layout):
-    layout._bw.setEnabled(True)
-    layout._bw_edit.setEnabled(True)
-    layout._fstart.setEnabled(True)
-    layout._fstart_edit.setEnabled(True)
-    layout._fstop.setEnabled(True)
-    layout._fstop_edit.setEnabled(True)
     
-def disable_freq_cont(layout):
-    layout._bw.setEnabled(False)
-    layout._bw_edit.setEnabled(False)
-    layout._fstart.setEnabled(False)
-    layout._fstart_edit.setEnabled(False)
-    layout._fstop.setEnabled(False)
-    layout._fstop_edit.setEnabled(False)
+    
 
 

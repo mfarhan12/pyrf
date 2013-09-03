@@ -59,7 +59,7 @@ class CaptureDevice(object):
         self.bin_size = bins
         self.fstart = device_set['freq'] - USABLE_BW/2
         self.fstop =  device_set['freq'] + USABLE_BW/2
-       
+      
         
         self._vrt_context = {}
 

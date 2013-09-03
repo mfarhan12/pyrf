@@ -3,3 +3,5 @@ dist/
 *.pyc
 MANIFEST
 pyrf.egg-info/
+
+*.csv

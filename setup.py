@@ -11,22 +11,14 @@ extras = {}
 try:
     import py2exe
     extras.update({
-        'options':{
-            'py2exe':{
-                'compressed': 1,
-                'bundle_files': 1,
-                'excludes': ['Tkconstants', 'Tkinter', 'tcl'],
-                },
-            },
-        'zipfile':None,
-        'windows':['wsa4000gui.py'],
+        'windows':['SpectrumAnalyzerGUI.py'],
         })
 except ImportError:
     pass
 
 setup(
     name='pyrf',
-    version='0.5.0-dev',
+    version='1.1.0-wsa5k',
     author='ThinkRF Corporation',
     author_email='support@thinkrf.com',
     packages=['pyrf', 'pyrf.devices', 'pyrf.connectors', 'pyrf.gui'],
@@ -60,7 +52,7 @@ setup(
     test_suite='pyrf.tests',
     entry_points={
         'gui_scripts': [
-            "wsa4000gui = pyrf.gui.wsa4000gui:main",
+            "speca-gui = pyrf.gui.spectrum_analyzer:main",
             ],
         },
     **extras
