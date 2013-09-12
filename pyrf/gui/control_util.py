@@ -155,9 +155,9 @@ def _atten_control(layout):
     change the attenuation state
     """
     if layout._atten.checkState() == QtCore.Qt.CheckState.Unchecked:
-        layout.dut.scpiset(':INPUT:ATTENUATOR DISABLED')
+        layout.dut.scpiset(':INPUT:ATTENUATOR 0')
     else:
-        layout.dut.scpiset(':INPUT:ATTENUATOR ENABLED')
+        layout.dut.scpiset(':INPUT:ATTENUATOR 1')
 def _enable_plot(layout):
     """
     pause/unpause the plot
