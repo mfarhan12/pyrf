@@ -61,7 +61,7 @@ class MainWindow(QtGui.QMainWindow):
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(openAction)
         fileMenu.addAction(exitAction)
-        self.setWindowTitle('Spectrum Analyzer')
+        self.setWindowTitle('pyRF Spectrum Analyzer')
         self.setCentralWidget(self.mainPanel)
         self.mainPanel.show()
         if name:
