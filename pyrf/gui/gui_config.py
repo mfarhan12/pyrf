@@ -148,7 +148,7 @@ class plot_state(object):
                 
         elif rbw != None:
             self.rbw = rbw * 1e3
-            self.bin_size = int((self.bandwidth) / self.rbw)
+            self.bin_size = int((constants.DEVICE_FULL_SPAN) / self.rbw)
             if self.bin_size < 1:
                 self.bin_size = 1
         
