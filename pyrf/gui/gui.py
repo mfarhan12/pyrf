@@ -144,7 +144,7 @@ class MainPanel(QtGui.QWidget):
             return
 
         self.read_trigg()
-        self.pow_data = pow_
+        self.pow_data = pow_ 
         self.update_plot()
 
     def keyPressEvent(self, event):

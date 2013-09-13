@@ -25,9 +25,9 @@ class WSA4000(object):
        Twisted Deferred object.
 
     """
-
+    
     ADC_DYNAMIC_RANGE = 72.5
-    NOISEFLOOR_CALIBRATION = -10
+    NOISEFLOOR_CALIBRATION = -10 + 74
     CAPTURE_FREQ_RANGES = [(0, 40*M, I_ONLY), (90*M, 10000*M, IQ)]
     SWEEP_FREQ_RANGE = (90*M, 10000*M)
 
