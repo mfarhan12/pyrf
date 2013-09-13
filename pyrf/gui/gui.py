@@ -144,7 +144,7 @@ class MainPanel(QtGui.QWidget):
             return
 
         self.read_trigg()
-        self.pow_data = pow_ - 50
+        self.pow_data = pow_
         self.update_plot()
 
     def keyPressEvent(self, event):
@@ -441,7 +441,7 @@ class MainPanel(QtGui.QWidget):
                 self.dut.freq(self.plot_state.center_freq)
     def update_freq_edit(self):
         self._freq_edit.setText("%0.1f" % (self.plot_state.center_freq / 1e6))
-    
+        cu._center_plot_view(self)
     def _plot_controls(self):
 
         plot_group = QtGui.QGroupBox("Plot Control")
