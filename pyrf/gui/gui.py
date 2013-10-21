@@ -122,7 +122,7 @@ class MainPanel(QtGui.QWidget):
         dut = WSA4000(connector=TwistedConnector(self._reactor))
         yield dut.connect(name)
         self.dut = dut
-        self.dut.scpiset(':INPUT:ATTENUATOR ENABLED')
+        self.dut.scpiset(':INPUT:ATTENUATOR 1')
         self.sweep_dut = SweepDevice(dut, self.receive_data)
         self.cap_dut = CaptureDevice(dut, self.receive_data)
         self.enable_controls()

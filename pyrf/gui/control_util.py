@@ -101,7 +101,7 @@ def _marker_control(layout):
     disable/enable marker
     """
     # if marker is on and selected, turn off
-    if layout.plot_state.marker_sel:
+    if layout.plot_state.marker:
         layout.plot_state.disable_marker(layout)
 
             
