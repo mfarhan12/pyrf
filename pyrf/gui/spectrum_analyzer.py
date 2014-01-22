@@ -1,7 +1,7 @@
 import sys
 from PySide import QtGui
 from pyrf.gui.gui import MainWindow
-
+del sys.modules['twisted.internet.reactor']
 import qt4reactor
 import logging
 
@@ -24,7 +24,6 @@ def main():
     # late import because installReactor is being used
     from twisted.internet import reactor
     reactor.run()
-    # del sys.modules['twisted.internet.reactor'] 
 
 
 
