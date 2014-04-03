@@ -27,8 +27,7 @@ class DiscoveryWidget(QtGui.QWidget):
         second_row.addWidget(self._wsa_list())
 
         third_row = QtGui.QHBoxLayout()
-        self._ip = QtGui.QLineEdit()
-        third_row.addWidget(self._ip)    
+        third_row.addWidget(self._ip())
 
         fourth_row = QtGui.QHBoxLayout()
         fourth_row.addWidget(self._ok_button())
@@ -52,6 +51,15 @@ class DiscoveryWidget(QtGui.QWidget):
             if self._list.currentItem() is not None:
                 self._ip.setText(self._list.currentItem().text()[-14:])
         return self._list
+
+    def _ip(self):
+        self._ip = QtGui.QLineEdit()
+
+        def ip_return_pressed():
+            self._ok.click()
+
+        self._ip.returnPressed.connect(lambda: ip_return_pressed())
+        return self._ip
 
     def _ok_button(self):
         self._ok = QtGui.QPushButton("Ok")
