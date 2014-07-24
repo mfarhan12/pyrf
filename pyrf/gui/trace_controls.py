@@ -72,7 +72,6 @@ class TraceControls(QtGui.QGroupBox):
         self.setTitle(name)
         self.setStyleSheet('color: rgb(0, 0, 0); font: bold 14px;')
         self._marker_trace = None
-
         self.setLayout(QtGui.QGridLayout())
         self._create_controls()
         self._build_layout()
