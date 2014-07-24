@@ -178,9 +178,9 @@ class DeviceControls(QtGui.QGroupBox):
             input_mode = self._mode.currentText()
             if not input_mode:
                 return
-
             self.controller.apply_settings(mode=input_mode)
-
+            if 'CONNECTOR' in self.gui_state.device_settings['iq_output_path']:
+                self.controller.apply_device_settings(rfe_mode = input_mode)
         def new_trigger():
             trigger_settings = self.gui_state.device_settings['trigger']
             if self._level_trigger.isChecked():
@@ -219,9 +219,10 @@ class DeviceControls(QtGui.QGroupBox):
         self._update_modes()
 
 
-    def _update_modes(self):
+    def _update_modes(self, include_sweep=True):
         modes = []
-        modes.extend(self.dut_prop.SPECA_MODES)
+        if include_sweep:
+            modes.extend(self.dut_prop.SPECA_MODES)
         modes.extend(self.dut_prop.RFE_MODES)
         self._mode.quiet_update(modes)
 
@@ -292,11 +293,9 @@ class DeviceControls(QtGui.QGroupBox):
                 c = self._mode.count()
 
                 # remove all sweep modes while using IQ out
-                for i in range(c + 1):
-                    if 'Sweep' in self._mode.itemText(c - i):
-                        self._mode.removeItem(c - i)
+                self._update_modes(include_sweep=False)
 
-                if 'Sweep' in state.rfe_mode():
+                if 'Sweep' in state.mode:
                     self._mode.setCurrentIndex(0)
 
                 # remove all digitizer controls
