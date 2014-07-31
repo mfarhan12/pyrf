@@ -34,7 +34,7 @@ def wsa_properties(device_id):
 
 class WSA4000Properties(object):
     model = 'WSA4000'
-
+    REFLEVEL_ERROR = 15.7678
     CAPTURE_FREQ_RANGES = [(0, 40*M, I_ONLY), (90*M, 10000*M, IQ)]
     SWEEP_FREQ_RANGE = (90*M, 10000*M)
 
@@ -77,7 +77,9 @@ class WSA4000Properties(object):
 class WSA5000_220Properties(object):
     model = 'WSA5000-220'
     MINIMUM_FW_VERSION = '3.2.0-rc1'
+
     TRIGGER_FW_VERSION = '4.1.0'
+    REFLEVEL_ERROR = 0
 
     CAPTURE_FREQ_RANGES = [(50*M, 20000*M, IQ)]
     SWEEP_FREQ_RANGE = (100*M, 20000*M)
@@ -193,6 +195,7 @@ class WSA5000_220Properties(object):
 
 class WSA5000_220_v2Properties(WSA5000_220Properties):
     model = 'WSA5000-220 v2'
+    REFLEVEL_ERROR = 15.7678
     # v2 -> hardware revision without SHN mode
     RFE_MODES = ('ZIF', 'SH', 'HDR', 'IQIN', 'DD')
 
