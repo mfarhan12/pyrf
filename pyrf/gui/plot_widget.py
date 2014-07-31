@@ -6,6 +6,7 @@ from PySide import QtCore
 
 from pyrf.gui import colors
 from pyrf.gui import labels
+from pyrf.gui import fonts
 from pyrf.gui.trace_controls import PLOT_TOP, PLOT_BOTTOM
 from pyrf.gui.waterfall_widget import (WaterfallModel,
     ThreadedWaterfallPlotWidget)
@@ -195,17 +196,11 @@ class Plot(QtCore.QObject):
         self.view_box = self.window.plotItem.getViewBox()
         self.view_box.setMouseEnabled(x = True, y = False)
 
-        # initialize the x-axis of the plot
-        self.window.setLabel('bottom', text = 'Frequency', units = 'Hz', unitPrefix=None)
-
         # initialize the y-axis of the plot
         self.window.setYRange(PLOT_BOTTOM, PLOT_TOP)
-        labelStyle = {'color': '#FFF', 'font-size': ' 16px', 'font-weight':'bold'}
+        labelStyle = fonts.AXIS_LABEL_FONT
         self.window.setLabel('bottom', 'Frequency', 'Hz', **labelStyle)
         self.window.setLabel('left', 'Power', 'dBm', **labelStyle)
-
-        # initialize fft curve
-        self.fft_curve = self.window.plot(pen = colors.TEAL_NUM)
 
         # initialize trigger lines
         self.amptrig_line = pg.InfiniteLine(pos = -100, angle = 0, movable = True)
@@ -301,7 +296,8 @@ class Plot(QtCore.QObject):
 
     def grid(self,state):
         self.window.showGrid(state,state)
-        self.window.getAxis('bottom').setPen((255,255,255))
+        self.window.getAxis('bottom').setPen(colors.GREY_NUM)
         self.window.getAxis('bottom').setGrid(200)
-        self.window.getAxis('left').setPen('w')
+        self.window.getAxis('left').setPen(colors.GREY_NUM)
         self.window.getAxis('left').setGrid(200)
+
