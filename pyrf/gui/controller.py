@@ -40,11 +40,12 @@ class SpecAController(QtCore.QObject):
     state_change = QtCore.Signal(SpecAState, list)
     capture_receive = QtCore.Signal(SpecAState, float, float, object, object, object, object)
     options_change = QtCore.Signal(dict, list)
-
+    plot_change = QtCore.Signal(dict, list)
     def __init__(self):
         super(SpecAController, self).__init__()
         self._dsp_options = {}
         self._options = {}
+        self._plot_options = {}
 
 
     def set_device(self, dut=None, playback_filename=None):
@@ -71,7 +72,7 @@ class SpecAController(QtCore.QObject):
             state_json = vrt_packet.fields['speca']
             # support old playback files
             if state_json['device_identifier'] == 'unknown':
-                state_json['device_identifier'] = 'ThinkRF,WSA5000 v3,,'
+                state_json['device_identifier'] = 'ThinkRF,WSA5000 v3,0,0'
             dut = Playback(state_json['device_class'],
                 state_json['device_identifier'])
             self._sweep_device = SweepDevice(dut)
@@ -157,6 +158,7 @@ class SpecAController(QtCore.QObject):
         device_set.pop('pll_reference')
         device_set.pop('iq_output_path')
         device_set.pop('trigger')
+
         self._sweep_device.capture_power_spectrum(
             self._state.center - self._state.span / 2.0,
             self._state.center + self._state.span / 2.0,
@@ -416,7 +418,15 @@ class SpecAController(QtCore.QObject):
             if not self._state or span != self._state.span:
                 changed.append('span')
 
+        if 'mode' in changed:
+            # check if RBW is appropriate for given mode
+            if state.rbw not in self._dut.properties.RBW_VALUES[state.rfe_mode()]:
+                if state.sweeping():
+                    state.rbw = self._dut.properties.RBW_VALUES[state.rfe_mode()][0]
+                else:
+                    state.rbw = self._dut.properties.RBW_VALUES[state.rfe_mode()][-1]
         self._state = state
+
         # start capture loop again when user switches output path
         # back to the internal digitizer XXX: very WSA5000-specific
         if 'device_settings.iq_output_path' in changed:
@@ -504,6 +514,16 @@ class SpecAController(QtCore.QObject):
         if 'free_plot_adjustment' in kwargs:
             self.enable_user_xrange_control(
                 not kwargs['free_plot_adjustment'])
+
+    def apply_plot_options(self, **kwargs):
+        """
+        Apply plot option changes and signal the change
+
+        :param kwargs: keyword arguments of the plot options
+        """
+        self._plot_options.update(kwargs)
+        self.plot_change.emit(dict(self._plot_options),
+            kwargs.keys())
 
     def get_options(self):
         return dict(self._options)
