@@ -38,7 +38,7 @@ from pyrf.gui.trace_controls import TraceControls
 
 VIEW_OPTIONS = [
     ('&IQ Plots', 'iq_plots', False),
-    ('&Spectrogram Plot', 'waterfall_plot', False),
+    ('&Spectrogram', 'waterfall_plot', False),
     ('&Persistence Plot', 'persistence_plot', False),
     ]
 
