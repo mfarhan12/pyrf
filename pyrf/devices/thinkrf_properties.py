@@ -177,7 +177,16 @@ class WSA5000_220Properties(object):
         }
 
     DC_OFFSET_BW = 240000 # XXX: an educated guess
-    TUNING_RESOLUTION = 100000
+    TUNING_RESOLUTION = {
+        'ZIF': 100000,
+        'HDR': 5000,
+        'SH': 100000,
+        'SHN': 100000,
+        'DEC_SH': 100000,
+        'DEC_SHN': 100000,
+        'IQIN': 100000,
+        'DD': 100000,
+        }
     FSHIFT_AVAILABLE = {
         'ZIF': True,
         'HDR': False,

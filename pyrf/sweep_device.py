@@ -358,15 +358,15 @@ def plan_sweep(device, fstart, fstop, rbw, mode, min_points=32):
 
     # step_size is limited by tuning resolution. usable_bw is limited by
     # bin_size. They won't be exactly equal, but try our best
-    step_size = max(1, (usable_bins * bin_size // prop.TUNING_RESOLUTION)
-        ) * prop.TUNING_RESOLUTION
+    step_size = max(1, (usable_bins * bin_size // prop.TUNING_RESOLUTION[rfe_mode])
+        ) * prop.TUNING_RESOLUTION[rfe_mode]
     # reduce usable_bins to match tuning resolution increment
     usable_bins = int(max(1, min(usable_bins, round(step_size / bin_size))))
     usable_bw = usable_bins * bin_size
 
     # start at the next tuning resolution increment left of ideal start
     fcenter = math.floor((fstart + usable2 - wasted_left)
-        / prop.TUNING_RESOLUTION) * prop.TUNING_RESOLUTION
+        / prop.TUNING_RESOLUTION[rfe_mode]) * prop.TUNING_RESOLUTION[rfe_mode]
     fcenter = max(fcenter, prop.MIN_TUNABLE[rfe_mode])
     bins_pass = int(round((fstart - (fcenter - usable2 + wasted_left))
         / bin_size))
@@ -399,8 +399,8 @@ def plan_sweep(device, fstart, fstop, rbw, mode, min_points=32):
     if mode == 'SH':
         points *= 2
 
-    assert fcenter % prop.TUNING_RESOLUTION == 0, fcenter
-    assert step_size > 0 and step_size % prop.TUNING_RESOLUTION == 0, step_size
+    assert fcenter % prop.TUNING_RESOLUTION[rfe_mode] == 0, fcenter
+    assert step_size > 0 and step_size % prop.TUNING_RESOLUTION[rfe_mode] == 0, step_size
     assert decimation > 0 and int(decimation) == decimation, decimation
     assert points > 0 and int(points) == points, points
     assert left_bin > 0 and int(left_bin) == left_bin, left_bin

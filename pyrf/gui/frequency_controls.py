@@ -96,7 +96,7 @@ class FrequencyControls(QtGui.QGroupBox):
         if 'mode' in changed:
             min_tunable = float(self.dut_prop.MIN_TUNABLE[state.rfe_mode()])
             max_tunable = float(self.dut_prop.MAX_TUNABLE[state.rfe_mode()])
-            tuning_res = float(self.dut_prop.TUNING_RESOLUTION)
+            tuning_res = float(self.dut_prop.TUNING_RESOLUTION[state.rfe_mode()])
 
             # XXX tuning_res is used here as an approximation of
             # "smallest reasonable span"
@@ -161,6 +161,7 @@ class FrequencyControls(QtGui.QGroupBox):
     def _freq_incr(self):
         steps_label = QtGui.QLabel("Adjust:")
         steps = QtGui.QComboBox(self)
+        steps.addItem("0.005 MHz")
         steps.addItem("0.1 MHz")
         steps.addItem("0.2 MHz")
         steps.addItem("0.5 MHz")
@@ -178,6 +179,11 @@ class FrequencyControls(QtGui.QGroupBox):
             self._bw_edit.setSingleStep(self.fstep)
             self._fstart_edit.setSingleStep(self.fstep)
             self._fstop_edit.setSingleStep(self.fstep)
+            print self.fstep
+            if self.fstep == 0.005:
+                self._freq_edit.setDecimals(3)
+            else:
+                self._freq_edit.setDecimals(2)
         steps.currentIndexChanged.connect(freq_step_change)
         steps.setCurrentIndex(6)
         self._fstep_box = steps

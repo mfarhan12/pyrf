@@ -432,8 +432,10 @@ class SpecAController(QtCore.QObject):
         Emit signal and handle special cases where extra work is needed in
         response to a state change.
         """
+        if self._dut is None:
+            return
         # make sure resolution of center are the same as the device's tunning resolution
-        center = float(np.round(state.center, -1 * int(np.log10(self._dut.properties.TUNING_RESOLUTION))))
+        center = float(np.round(state.center, -1 * int(np.log10(self._dut.properties.TUNING_RESOLUTION[state.rfe_mode()]))))
         state = SpecAState(state, center=center)
 
         if not state.sweeping():
