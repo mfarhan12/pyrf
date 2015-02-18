@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import scipy.signal as sig
 from pyrf.vrt import (I_ONLY, VRT_IFDATA_I14Q14, VRT_IFDATA_I14,
     VRT_IFDATA_I24, VRT_IFDATA_PSD8)
 
@@ -67,6 +68,9 @@ def compute_fft(dut, data_pkt, context, correct_phase=True,
     if stream_id == VRT_IFDATA_PSD8:
         # TODO: handle convert_to_dbm option
         power_spectrum = np.array(data, dtype=float)
+    gaussian = (np.random.random(len(power_spectrum)) * 10) + np.mean(power_spectrum)
+
+    power_spectrum = np.fmax(gaussian, power_spectrum)
 
     if apply_spec_inv:
         if spec_inv:  # handle inverted spectrum
@@ -74,6 +78,7 @@ def compute_fft(dut, data_pkt, context, correct_phase=True,
     if apply_reference:
         noiselevel_offset = reference_level + prop.REFLEVEL_ERROR
         return power_spectrum + noiselevel_offset
+
     return power_spectrum
 
 def _decode_data_pkts(data_pkt):
