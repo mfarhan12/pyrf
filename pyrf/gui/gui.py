@@ -51,6 +51,7 @@ DEVELOPER_OPTIONS = [
     ('&DC Offset', 'dsp.hide_differential_dc_offset', True),
     ('Apply &Spectral Inversion', 'dsp.apply_spec_inv', True),
     ('Apply &Hanning Window', 'dsp.apply_window', True),
+    ('Apply &Noise Equalization', 'dsp.noise_equalization', True),
     ]
 
 MINIMUM_WIDTH = 600
@@ -612,7 +613,7 @@ class MainPanel(QtGui.QWidget):
 
         if self.iq_plots_enabled:
             self.update_iq()
-
+  
         if self.waterfall_plot_enabled or self.persistence_plot_enabled:
             if (fstart, fstop, len(power)) != self._waterfall_range:
                 self._plot.waterfall_data.reset(self.xdata)

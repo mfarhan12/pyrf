@@ -1,6 +1,5 @@
 import math
 import numpy as np
-import scipy.signal as sig
 from pyrf.vrt import (I_ONLY, VRT_IFDATA_I14Q14, VRT_IFDATA_I14,
     VRT_IFDATA_I24, VRT_IFDATA_PSD8)
 
@@ -18,7 +17,8 @@ def calculate_channel_power(power_spectrum):
 
 def compute_fft(dut, data_pkt, context, correct_phase=True,
         hide_differential_dc_offset=True, convert_to_dbm=True, 
-        apply_window=True, apply_spec_inv=True, apply_reference=True,ref=None):
+        apply_window=True, apply_spec_inv=True, apply_reference=True,ref=None,
+        noise_equalization = False):
     """
     Return an array of dBm values by computing the FFT of
     the passed data and reference level.
@@ -68,9 +68,9 @@ def compute_fft(dut, data_pkt, context, correct_phase=True,
     if stream_id == VRT_IFDATA_PSD8:
         # TODO: handle convert_to_dbm option
         power_spectrum = np.array(data, dtype=float)
-    gaussian = (np.random.random(len(power_spectrum)) * 10) + np.mean(power_spectrum)
-
-    power_spectrum = np.fmax(gaussian, power_spectrum)
+    if noise_equalization:
+        gaussian = (np.random.random(len(power_spectrum)) * 15) + np.mean(power_spectrum)
+        power_spectrum = np.fmax(gaussian, power_spectrum)
 
     if apply_spec_inv:
         if spec_inv:  # handle inverted spectrum
