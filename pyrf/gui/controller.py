@@ -200,7 +200,8 @@ class SpecAController(QtCore.QObject):
             self._state.center + self._state.span / 2.0,
             self._state.rbw,
             device_set,
-            mode=self._state.rfe_mode())
+            mode=self._state.rfe_mode(),
+            dsp = self._dsp_options)
         self.was_sweeping = True
         self._single_capture = False
 

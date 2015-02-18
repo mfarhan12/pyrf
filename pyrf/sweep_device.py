@@ -109,6 +109,7 @@ class SweepDevice(object):
             fstart, fstop, rbw,
             device_settings=None,
             mode='ZIF',
+            dsp = None,
             continuous=False,
             min_points=32):
         """
@@ -126,7 +127,9 @@ class SweepDevice(object):
         :type dict:
         :param mode: sweep mode, 'ZIF left band', 'ZIF' or 'SH'
         :type mode: string
-        :param continuous: async continue after first sweep
+        :param dsp: dict containing the DSP settings to be used
+        :type dsp: dict
+        :param continuous: async con
         :type continuous: bool
         :param min_points: smallest number of points per capture from real_device
         :type min_points: int
@@ -136,7 +139,7 @@ class SweepDevice(object):
                 "continuous mode only applies to async operation")
         self.device_settings = device_settings
         self.continuous = continuous
-
+        self.dsp = dsp
         self.real_device.abort()
         self.real_device.flush()
         self.real_device.request_read_perm()
@@ -227,7 +230,7 @@ class SweepDevice(object):
             return # more data than we asked for
 
         fft_start_time = time.time()
-        pow_data = compute_fft(self.real_device, packet, self._vrt_context)
+        pow_data = compute_fft(self.real_device, packet, self._vrt_context, **self.dsp)
         # collect and compute bins
         collect_start_time = time.time()
         ss = self.plan[self._ss_index]

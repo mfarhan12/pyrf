@@ -68,9 +68,14 @@ def compute_fft(dut, data_pkt, context, correct_phase=True,
     if stream_id == VRT_IFDATA_PSD8:
         # TODO: handle convert_to_dbm option
         power_spectrum = np.array(data, dtype=float)
+    
+    # apply noise floor equalization
     if noise_equalization:
-        gaussian = (np.random.random(len(power_spectrum)) * 15) + np.mean(power_spectrum)
-        power_spectrum = np.fmax(gaussian, power_spectrum)
+        average_power = np.mean(power_spectrum)
+        gaussian = (np.random.random(len(power_spectrum)) * 15) + average_power
+        for i in range(len(power_spectrum)):
+            if power_spectrum[i] > average_power:
+                power_spectrum[i] = np.fmax(power_spectrum[i], gaussian[i])
 
     if apply_spec_inv:
         if spec_inv:  # handle inverted spectrum
