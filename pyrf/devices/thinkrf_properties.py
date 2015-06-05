@@ -181,7 +181,8 @@ class WSA5000_220Properties(object):
         'trigtype', 'level_fstart', 'level_fstop', 'level_amplitude']
 
     LEVEL_TRIGGER_RFE_MODES = ['SH', 'SHN', 'ZIF']
-    DEFAULT_SPECA_SPAN = 125.0 * M
+    DEFAULT_SPECA_SPAN = 125 * M
+
     SPECA_DEFAULTS = {
         'mode': 'Sweep SH',
         'center': 2450 * M,
@@ -236,6 +237,10 @@ class WSA5000_208Properties(WSA5000_220Properties):
 
     MAX_TUNABLE = dict((mode, min(8000*M, f))
         for mode, f in WSA5000_220Properties.MAX_TUNABLE.iteritems())
+    DEFAULT_SPECA_SPAN = MAX_TUNABLE['SHN'] - WSA5000_220Properties.MIN_TUNABLE['SHN']
+    SPECA_DEFAULTS = dict(WSA5000_220Properties.SPECA_DEFAULTS,
+        span= DEFAULT_SPECA_SPAN,
+        center = 4025 * M,)
 
 class WSA5000_108Properties(WSA5000_208Properties):
     model = 'WSA5000-108'
@@ -255,6 +260,7 @@ class WSA5000_208_v2Properties(WSA5000_220_v2Properties, WSA5000_208Properties):
 
 class WSA5000_408Properties(WSA5000_208Properties):
     model = 'WSA5000-408'
+
     RFE_MODES = ('SH', 'SHN','ZIF', 'HDR', 'DD')
 
 class WSA5000_427Properties(WSA5000_220Properties):
@@ -271,6 +277,10 @@ class WSA5000_427Properties(WSA5000_220Properties):
         'trigtype', 'level_fstart', 'level_fstop', 'level_amplitude']
     MAX_TUNABLE = dict((mode, max(27000*M, f))
         for mode, f in WSA5000_220Properties.MAX_TUNABLE.iteritems())
+    DEFAULT_SPECA_SPAN = MAX_TUNABLE['SHN'] - WSA5000_220Properties.MIN_TUNABLE['SHN']
+    SPECA_DEFAULTS = dict(WSA5000_220Properties.SPECA_DEFAULTS,
+        span= DEFAULT_SPECA_SPAN,
+        center = 13250 * M,)
 
 class WSA5000_418Properties(WSA5000_220Properties):
     model = 'WSA5000-418'
@@ -286,7 +296,10 @@ class WSA5000_418Properties(WSA5000_220Properties):
 
     MAX_TUNABLE = dict((mode, 18000*M)
         for mode, f in WSA5000_220Properties.MAX_TUNABLE.iteritems())
-
+    DEFAULT_SPECA_SPAN = MAX_TUNABLE['SHN'] - WSA5000_220Properties.MIN_TUNABLE['SHN']
+    SPECA_DEFAULTS = dict(WSA5000_220Properties.SPECA_DEFAULTS,
+        span= DEFAULT_SPECA_SPAN,
+        center = 8750 * M,)
 class BNC_RTSA75008_Properties(WSA5000_408Properties):
     model = 'RTSA7500-8'
     manufacturer = 'Berkley Nucleonics'
