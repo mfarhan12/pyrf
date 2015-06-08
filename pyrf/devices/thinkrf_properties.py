@@ -300,6 +300,7 @@ class WSA5000_418Properties(WSA5000_220Properties):
     SPECA_DEFAULTS = dict(WSA5000_220Properties.SPECA_DEFAULTS,
         span= DEFAULT_SPECA_SPAN,
         center = 8750 * M,)
+
 class BNC_RTSA75008_Properties(WSA5000_408Properties):
     model = 'RTSA7500-8'
     manufacturer = 'Berkley Nucleonics'
